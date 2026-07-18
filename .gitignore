@@ -4,3 +4,4 @@
 
 # Build artifacts
 /out/
+OVMF_VARS.fd
