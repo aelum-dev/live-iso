@@ -1,0 +1,12 @@
+[Unit]
+Description=Hyprland Window Manager
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/hyprland
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
