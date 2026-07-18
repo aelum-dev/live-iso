@@ -3,6 +3,7 @@ linux-lts
 mkinitcpio
 arch-install-scripts
 mkinitcpio-archiso
+pv
 sudo
 vim
 nano

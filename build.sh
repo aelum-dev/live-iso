@@ -26,16 +26,27 @@ echo "=== Building local repository ==="
 mkdir -p "$REPO_DIR"
 mkdir -p "$BLANK_DB"
 
-# Read curated packages from packages.x86_64 (skip blank lines and comments)
-PACKAGES=()
+# Read ISO packages from packages.x86_64 (skip blank lines and comments)
+ISO_PACKAGES=()
 while IFS= read -r line; do
-    line="${line%%#*}"        # strip inline comments
-    line="${line#"${line%%[![:space:]]*}"}"  # trim leading whitespace
-    line="${line%"${line##*[![:space:]]}"}"  # trim trailing whitespace
-    [[ -n "$line" ]] && PACKAGES+=("$line")
+    line="${line%%#*}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -n "$line" ]] && ISO_PACKAGES+=("$line")
 done < "$PROFILE_DIR/packages.x86_64"
 
-echo "Packages to fetch: ${PACKAGES[*]}"
+echo "ISO packages: ${ISO_PACKAGES[*]}"
+
+# Read repo packages from repo_packages.x86_64 (skip blank lines and comments)
+REPO_PACKAGES=()
+while IFS= read -r line; do
+    line="${line%%#*}"
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -n "$line" ]] && REPO_PACKAGES+=("$line")
+done < "$PROFILE_DIR/repo_packages.x86_64"
+
+echo "Repo packages: ${REPO_PACKAGES[*]}"
 
 # Download ALL packages (including dependencies), using existing repo as cache
 # This bypasses pacman 7+ alpm-user download isolation which cannot write to
@@ -57,7 +68,7 @@ sudo cp "$DOWNLOAD_DIR"/*.pkg.tar.zst "$REPO_DIR/"
 sudo rm -rf "$DOWNLOAD_DIR"
 
 # Create the repo database from the downloaded packages
-sudo repo-add "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst
+sudo repo-add -Q "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst
 
 echo "Local repo built: $(ls "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null | wc -l) packages"
 
