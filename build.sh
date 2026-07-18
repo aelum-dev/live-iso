@@ -67,8 +67,9 @@ echo "=== Packing repo into airootfs ==="
 sudo rm -rf "$AIROOTFS_REPO"
 sudo mkdir -p "$AIROOTFS_REPO"
 sudo cp "$REPO_DIR"/*.pkg.tar.zst "$AIROOTFS_REPO/"
-sudo cp "$REPO_DIR/custom.db.tar.zst" "$AIROOTFS_REPO/"
-sudo cp "$REPO_DIR/custom.files.tar.zst" "$AIROOTFS_REPO/" 2>/dev/null || true
+# Use -a to preserve symlinks created by repo-add (custom.db -> custom.db.tar.zst)
+sudo cp -a "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR/custom.db" "$AIROOTFS_REPO/"
+sudo cp -a "$REPO_DIR/custom.files.tar.zst" "$REPO_DIR/custom.files" "$AIROOTFS_REPO/" 2>/dev/null || true
 
 echo "Repo copied to $AIROOTFS_REPO"
 
