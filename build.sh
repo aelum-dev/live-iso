@@ -37,12 +37,15 @@ done < "$PROFILE_DIR/packages.x86_64"
 
 echo "Packages to fetch: ${PACKAGES[*]}"
 
-# Download ALL packages (including dependencies) into a temp dir first,
-# then copy into repo/. This bypasses pacman 7+ alpm-user download isolation
-# which cannot write to the project directory.
+# Download ALL packages (including dependencies), using existing repo as cache
+# This bypasses pacman 7+ alpm-user download isolation which cannot write to
+# the project directory.
 DOWNLOAD_DIR="/tmp/archiso-download"
 sudo rm -rf "$DOWNLOAD_DIR"
 sudo mkdir -p "$DOWNLOAD_DIR"
+
+# Use existing repo packages as cache to avoid re-downloading
+sudo cp "$REPO_DIR"/*.pkg.tar.zst "$DOWNLOAD_DIR/" 2>/dev/null || true
 
 sudo pacman -Syw --noconfirm \
     --cachedir "$DOWNLOAD_DIR" \
