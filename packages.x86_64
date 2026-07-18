@@ -3,3 +3,4 @@ linux-lts
 mkinitcpio
 arch-install-scripts
 mkinitcpio-archiso
+sudo

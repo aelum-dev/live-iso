@@ -57,7 +57,7 @@ sudo cp "$DOWNLOAD_DIR"/*.pkg.tar.zst "$REPO_DIR/"
 sudo rm -rf "$DOWNLOAD_DIR"
 
 # Create the repo database from the downloaded packages
-repo-add "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst
+sudo repo-add "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst
 
 echo "Local repo built: $(ls "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null | wc -l) packages"
 
