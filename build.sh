@@ -4,9 +4,9 @@ set -euo pipefail
 PROFILE_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORK_DIR="/tmp/archiso-build"
 ISO_DIR="out"
-REPO_DIR="$PROFILE_DIR/repo"
-AIROOTFS_REPO="$PROFILE_DIR/airootfs/repo"
+REPO_DIR="$PROFILE_DIR/airootfs/repo"
 BLANK_DB="/tmp/blankdb"
+DOWNLOAD_DIR="/tmp/archiso-download"
 
 echo "=== Offline ArchISO Builder ==="
 echo "Profile: $PROFILE_DIR"
@@ -19,12 +19,17 @@ sudo rm -rf "$WORK_DIR"
 sudo mkdir -p "$WORK_DIR"
 sudo mkdir -p "$ISO_DIR"
 sudo rm -rf "$BLANK_DB"
+sudo rm -rf "$DOWNLOAD_DIR"
 
-# ── Step 2: Build local pacman repository ───────────────────────────────────
+# ── Step 2: Download packages ───────────────────────────────────────────────
 echo ""
-echo "=== Building local repository ==="
+echo "=== Downloading packages ==="
 mkdir -p "$REPO_DIR"
+mkdir -p "$DOWNLOAD_DIR"
 mkdir -p "$BLANK_DB"
+
+# Use existing repo packages as cache to avoid re-downloading
+sudo cp "$REPO_DIR"/*.pkg.tar.zst "$DOWNLOAD_DIR/" 2>/dev/null || true
 
 # Read ISO packages from packages.x86_64 (skip blank lines and comments)
 ISO_PACKAGES=()
@@ -48,43 +53,26 @@ done < "$PROFILE_DIR/repo_packages.x86_64"
 
 echo "Repo packages: ${REPO_PACKAGES[*]}"
 
-# Download ALL packages (ISO + repo), using existing repo as cache
-# This bypasses pacman 7+ alpm-user download isolation which cannot write to
-# the project directory.
-DOWNLOAD_DIR="/tmp/archiso-download"
-sudo rm -rf "$DOWNLOAD_DIR"
-sudo mkdir -p "$DOWNLOAD_DIR"
-
-# Use existing repo packages as cache to avoid re-downloading
-sudo cp "$REPO_DIR"/*.pkg.tar.zst "$DOWNLOAD_DIR/" 2>/dev/null || true
-
+# Download ALL packages using blank dbpath and temp cachedir (bypasses pacman 7 alpm-user isolation)
 sudo pacman -Syw --noconfirm \
     --cachedir "$DOWNLOAD_DIR" \
     --dbpath "$BLANK_DB" \
     "${ISO_PACKAGES[@]}" "${REPO_PACKAGES[@]}"
 
-# Move downloaded packages into the repo directory
+# Copy downloaded packages to repo directory
 sudo cp "$DOWNLOAD_DIR"/*.pkg.tar.zst "$REPO_DIR/"
 sudo rm -rf "$DOWNLOAD_DIR"
 
-# Create the repo database from the downloaded packages
+# Create the repo database
 sudo repo-add -q "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst
 
 echo "Local repo built: $(ls "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null | wc -l) packages"
 
-# ── Step 3: Copy repo into airootfs ─────────────────────────────────────────
-echo ""
-echo "=== Packing repo into airootfs ==="
-sudo rm -rf "$AIROOTFS_REPO"
-sudo mkdir -p "$AIROOTFS_REPO"
-sudo cp "$REPO_DIR"/*.pkg.tar.zst "$AIROOTFS_REPO/"
-# Use -a to preserve symlinks created by repo-add (custom.db -> custom.db.tar.zst)
-sudo cp -a "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR/custom.db" "$AIROOTFS_REPO/"
-sudo cp -a "$REPO_DIR/custom.files.tar.zst" "$REPO_DIR/custom.files" "$AIROOTFS_REPO/" 2>/dev/null || true
-
-echo "Repo copied to $AIROOTFS_REPO"
-
-# ── Step 4: Run mkarchiso ───────────────────────────────────────────────────
+# ── Step 3: Run mkarchiso ───────────────────────────────────────────────────
+# Note: mkarchiso uses the profile's pacman.conf for pacstrap.
+# The profile pacman.conf has [custom] pointing to file://FILE_REPO_PATH,
+# but we don't use it during build (pacstrap uses core/extra from mirrorlist).
+# The local repo in airootfs/repo is only for the final ISO.
 echo ""
 echo "=== Running mkarchiso ==="
 sudo mkarchiso -w "$WORK_DIR" -v -m iso -o "$ISO_DIR" -r "$PROFILE_DIR"
