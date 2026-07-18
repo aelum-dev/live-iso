@@ -11,7 +11,7 @@ distro/
 ├── build.sh                    # Main build script
 ├── run.sh                      # QEMU runner for testing
 ├── profiledef.sh               # ISO profile definition
-├── pacman.conf                 # Host pacman config (for building)
+├── pacman.conf                 # Host pacman config (for building, [custom] commented out)
 ├── packages.x86_64             # Packages for the LIVE ISO
 ├── repo_packages.x86_64        # Packages for the CUSTOM REPO
 ├── airootfs/                   # Live ISO root filesystem
@@ -25,8 +25,7 @@ distro/
 │   │   └── systemd/system/getty@tty1.service.d/
 │   │       └── autologin.conf  # Autologin configuration
 │   ├── home/aestheticos/       # User home directory
-│   └── repo/                   # Repo files copied here during build
-├── repo/                       # Local pacman repository (built during build)
+│   └── repo/                   # Local pacman repository (built in-place)
 ├── out/                        # Output ISO files
 ├── efiboot/                    # Boot configuration
 └── OVMF_VARS.fd               # UEFI variables for QEMU
@@ -45,18 +44,18 @@ These are used by `mkarchiso` to build the live ISO. They are also placed in the
 Packages available in the local repo for system installation:
 - `btop`, `fastfetch`
 
-These are downloaded and placed in the repo alongside ISO package dependencies.
-
-**Note:** Both sets end up in the repo directory because `mkarchiso` installs ISO packages from the repo. The repo will contain ISO packages + repo packages + all dependencies.
+Both package sets (ISO + repo) end up in `airootfs/repo/` because `mkarchiso` installs ISO packages from the repo during build. The repo will contain ISO packages + repo packages + all dependencies.
 
 ## Build Process (`build.sh`)
 
 1. **Clean** previous build artifacts
-2. **Download** packages from both lists using host pacman (with existing repo as cache)
-3. **Copy** all downloaded packages to the repo directory
-4. **Create** repo database with `repo-add -q`
-5. **Copy** repo into `airootfs/repo/` (preserving symlinks with `cp -a`)
-6. **Run** `mkarchiso` to build the ISO
+2. **Cache** existing `airootfs/repo` packages to temp directory (avoids re-downloading)
+3. **Download** packages from both lists using host pacman (with cache, only new/updated packages fetched)
+4. **Copy** all downloaded packages to `airootfs/repo/`
+5. **Create** repo database with `repo-add -q`
+6. **Run** `mkarchiso` to build the ISO (uses core/extra mirrors, not local repo)
+
+**Note:** The local repo (`airootfs/repo/`) is built in-place — no separate `repo/` directory or copying step needed. The profile's `pacman.conf` has `[custom]` commented out; pacstrap uses core/extra mirrors during build. The final ISO uses `airootfs/etc/pacman.conf` which points to `file:///repo`.
 
 ## Live ISO Configuration
 
@@ -82,8 +81,9 @@ These are downloaded and placed in the repo alongside ISO package dependencies.
 
 1. **mkinitcpio is required** for the live ISO — `base` package depends on it, and swapping to dracut for the installed system would require a custom `base` package
 2. **Repo contains all packages** — ISO packages must be in the repo for mkarchiso to install them
-3. **Offline operation** — no network repos, everything from the local curated repo
-4. **No text editors in live ISO** for on-the-fly config changes (vi/nano only in ISO, not in minimal install)
+3. **Offline operation** — no network repos in the final ISO, everything from the local curated repo at `file:///repo`
+4. **Pacman 7+ alpm-user isolation** — requires `--dbpath` and `--cachedir` options for package downloads (bypasses download user restrictions)
+5. **No text editors in live ISO** for on-the-fly config changes (vi/nano only in ISO, not in minimal install)
 
 ## Build Commands
 
