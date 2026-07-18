@@ -1,3 +1,4 @@
 base
 linux-lts
 mkinitcpio
+arch-install-scripts

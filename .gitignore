@@ -1,3 +1,6 @@
-# Build artifacts (work dir is external: /tmp/archiso-build)
-# Keep this file as a placeholder for future build artifacts
-out
+# Local repository (built by build.sh, not tracked in git)
+/repo/
+/airootfs/repo
+
+# Build artifacts
+/out/
