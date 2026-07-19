@@ -17,4 +17,5 @@ file_permissions=(
   ["/etc/shadow"]="0:0:400"
   ["/etc/sudoers.d/aestheticos"]="0:0:440"
   ["/home/aestheticos"]="1000:1000:755"
+  ["/usr/local/bin/aesthetic-os-installer"]="0:0:755"
 )

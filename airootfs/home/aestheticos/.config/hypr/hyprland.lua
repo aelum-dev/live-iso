@@ -28,7 +28,7 @@ local terminal    = "alacritty"
 -- Or execute your favorite apps at launch like this:
 
 hl.on("hyprland.start", function () 
-    hl.exec_cmd(terminal)
+    hl.exec_cmd("/usr/local/bin/aesthetic-os-installer")
 end)
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----
@@ -49,7 +49,7 @@ hl.config({
         gaps_in  = 5,
         gaps_out = 20,
 
-        border_size = 2,
+        border_size = 0,
 
         col = {
             active_border   = { colors = {"rgba(33ccffee)", "rgba(00ff99ee)"}, angle = 45 },
@@ -208,11 +208,8 @@ hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2
 ---- WINDOWS AND WORKSPACES ----
 --------------------------------
 
--- Hyprland-run windowrule
 hl.window_rule({
-    name  = "move-hyprland-run",
-    match = { class = "hyprland-run" },
-
-    move  = "20 monitor_h-120",
+    name  = "installer",
+    match = { class = "aesthetic-os-installer" },
     float = true,
 })
