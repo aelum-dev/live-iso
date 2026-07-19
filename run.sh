@@ -24,6 +24,13 @@ if [ ! -f "$OVMF_VARS" ]; then
     fi
 fi
 
+# --- Virtual disk ---
+VDISK="$PROFILE_DIR/vdisk.qcow2"
+if [ ! -f "$VDISK" ]; then
+    echo "Creating virtual disk: $VDISK (10G) ..."
+    qemu-img create -f qcow2 "$VDISK" 10G
+fi
+
 exec qemu-system-x86_64 \
     -cdrom "$ISO" \
     -boot d \
@@ -36,4 +43,6 @@ exec qemu-system-x86_64 \
     -device virtio-vga \
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
     -drive if=pflash,format=raw,file="$OVMF_VARS" \
+    -drive id=vdisk,file="$VDISK",if=none,format=qcow2 \
+    -device virtio-blk-pci,drive=vdisk \
     -virtfs local,path=/home/power007/Projects/shared,mount_tag=shared,security_model=mapped,id=hostshared
