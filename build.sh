@@ -31,40 +31,29 @@ mkdir -p "$BLANK_DB"
 # Use existing repo packages as cache to avoid re-downloading
 sudo cp "$REPO_DIR"/*.pkg.tar.zst "$DOWNLOAD_DIR/" 2>/dev/null || true
 
-# Read ISO packages from packages.x86_64 (skip blank lines and comments)
-ISO_PACKAGES=()
+# Read packages from packages.x86_64 (skip blank lines and comments)
+PACKAGES=()
 while IFS= read -r line; do
     line="${line%%#*}"
     line="${line#"${line%%[![:space:]]*}"}"
     line="${line%"${line##*[![:space:]]}"}"
-    [[ -n "$line" ]] && ISO_PACKAGES+=("$line")
+    [[ -n "$line" ]] && PACKAGES+=("$line")
 done < "$PROFILE_DIR/packages.x86_64"
 
-echo "ISO packages: ${ISO_PACKAGES[*]}"
-
-# Read repo packages from repo_packages.x86_64 (skip blank lines and comments)
-REPO_PACKAGES=()
-while IFS= read -r line; do
-    line="${line%%#*}"
-    line="${line#"${line%%[![:space:]]*}"}"
-    line="${line%"${line##*[![:space:]]}"}"
-    [[ -n "$line" ]] && REPO_PACKAGES+=("$line")
-done < "$PROFILE_DIR/repo_packages.x86_64"
-
-echo "Repo packages: ${REPO_PACKAGES[*]}"
+echo "Packages: ${PACKAGES[*]}"
 
 # Download ALL packages using blank dbpath and temp cachedir (bypasses pacman 7 alpm-user isolation)
 sudo pacman -Syw --noconfirm \
     --cachedir "$DOWNLOAD_DIR" \
     --dbpath "$BLANK_DB" \
-    "${ISO_PACKAGES[@]}" "${REPO_PACKAGES[@]}"
+    "${PACKAGES[@]}"
 
 # Copy downloaded packages to repo directory
 sudo cp "$DOWNLOAD_DIR"/*.pkg.tar.zst "$REPO_DIR/"
 sudo rm -rf "$DOWNLOAD_DIR"
 
 # Create the repo database
-sudo repo-add -q "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst
+sudo repo-add -q "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null
 
 echo "Local repo built: $(ls "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null | wc -l) packages"
 
