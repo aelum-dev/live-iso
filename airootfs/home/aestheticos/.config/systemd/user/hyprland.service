@@ -4,7 +4,7 @@ After=default.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/hyprland
+ExecStart=/usr/bin/start-hyprland
 Restart=on-failure
 RestartSec=2
 
