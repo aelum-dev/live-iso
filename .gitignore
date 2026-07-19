@@ -5,3 +5,4 @@
 # Build artifacts
 /out/
 OVMF_VARS.fd
+vdisk.qcow2
