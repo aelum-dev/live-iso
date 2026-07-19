@@ -35,4 +35,5 @@ exec qemu-system-x86_64 \
     -display default \
     -device virtio-vga \
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
-    -drive if=pflash,format=raw,file="$OVMF_VARS"
+    -drive if=pflash,format=raw,file="$OVMF_VARS" \
+    -virtfs local,path=/home/power007/Projects/shared,mount_tag=shared,security_model=mapped,id=hostshared

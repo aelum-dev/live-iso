@@ -1,0 +1,12 @@
+[Unit]
+Description=Mount shared 9p folder from host
+After=local-fs-pre.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/install -d -m 0755 /shared
+ExecStart=/usr/bin/mount -t 9p -o trans=virtio,version=9p2000.L shared /shared
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
