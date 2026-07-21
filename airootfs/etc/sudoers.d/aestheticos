@@ -1,1 +1,1 @@
-aestheticos ALL=(ALL) ALL
+aestheticos ALL=(ALL) NOPASSWD: /shared/aestheticos-helper

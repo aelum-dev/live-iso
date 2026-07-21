@@ -10,12 +10,12 @@ install_dir="arch"
 buildmodes=('iso')
 bootmodes=('uefi.systemd-boot')
 pacman_conf="pacman.conf"
-airootfs_image_type="erofs"
-airootfs_image_tool_options=('-zlzma,109' -E 'ztailpacking')
+airootfs_image_type="squashfs"
+airootfs_image_tool_options=('-comp' 'xz' '-Xbcj' 'x86' '-b' '1M' '-Xdict-size' '1M')
 bootstrap_tarball_compression=(xz -9e)
 file_permissions=(
   ["/etc/shadow"]="0:0:400"
   ["/etc/sudoers.d/aestheticos"]="0:0:440"
+  ["/etc/sudoers.d/90-aestheticos-helper"]="0:0:440"
   ["/home/aestheticos"]="1000:1000:755"
-  ["/usr/local/bin/aesthetic-os-installer"]="0:0:755"
 )

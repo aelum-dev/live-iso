@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROFILE_DIR="$(cd "$(dirname "$0")" && pwd)"
-ISO="$PROFILE_DIR/out/archlinux-baseline-2026.07.19-x86_64.iso"
+ISO="$PROFILE_DIR/out/archlinux-baseline-2026.07.21-x86_64.iso"
 
 [ -f "$ISO" ] || { echo "ISO not found: $ISO"; exit 1; }
 
