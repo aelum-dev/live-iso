@@ -2,24 +2,38 @@
 set -euo pipefail
 
 PROFILE_DIR="$(cd "$(dirname "$0")" && pwd)"
-ISO="$PROFILE_DIR/out/archlinux-baseline-2026.07.22-x86_64.iso"
 
-[ -f "$ISO" ] || { echo "ISO not found: $ISO"; exit 1; }
+# Автопоиск ISO в папке out/ (или передача пути первым аргументом: ./run.sh path/to.iso)
+ISO="${1:-$(find "$PROFILE_DIR/out" -maxdepth 1 -name "*.iso" 2>/dev/null | head -1)}"
+
+if [ -z "$ISO" ] || [ ! -f "$ISO" ]; then
+    echo "Error: ISO file not found in $PROFILE_DIR/out/"
+    exit 1
+fi
+
+echo "Using ISO: $ISO"
+
+# --- Shared Directory ---
+SHARED_DIR="$HOME/Projects/shared"
+mkdir -p "$SHARED_DIR"
 
 # --- UEFI firmware setup ---
-OVMF_CODE=$(find /usr/share/OVMF /usr/share/edk2/x64 -name "OVMF_CODE*" 2>/dev/null | head -1)
+# Приоритет отдаем парным 4M файлам edk2
+OVMF_CODE=$(find /usr/share/edk2/x64 /usr/share/OVMF -name "OVMF_CODE.4m.fd" 2>/dev/null | head -1)
+[ -n "$OVMF_CODE" ] || OVMF_CODE=$(find /usr/share/edk2/x64 /usr/share/OVMF -name "OVMF_CODE*.fd" 2>/dev/null | head -1)
+
 [ -n "$OVMF_CODE" ] || { echo "Error: OVMF_CODE not found. Install edk2-ovmf package."; exit 1; }
 
 OVMF_VARS="$PROFILE_DIR/OVMF_VARS.fd"
 if [ ! -f "$OVMF_VARS" ]; then
-    OVMF_VARS_SRC=$(find /usr/share/OVMF /usr/share/edk2/x64 -name "OVMF_VARS*.fd" ! -name "*secboot*" 2>/dev/null | head -1)
+    OVMF_VARS_SRC=$(find /usr/share/edk2/x64 /usr/share/OVMF -name "OVMF_VARS.4m.fd" ! -name "*secboot*" 2>/dev/null | head -1)
+    [ -n "$OVMF_VARS_SRC" ] || OVMF_VARS_SRC=$(find /usr/share/edk2/x64 /usr/share/OVMF -name "OVMF_VARS*.fd" ! -name "*secboot*" 2>/dev/null | head -1)
+    
     if [ -n "$OVMF_VARS_SRC" ]; then
         echo "Copying OVMF_VARS.fd from $OVMF_VARS_SRC ..."
         cp "$OVMF_VARS_SRC" "$OVMF_VARS"
     else
-        echo "Error: OVMF_VARS.fd not found."
-        echo "  Install edk2-ovmf package, or copy one from:"
-        echo "    /usr/share/edk2/x64/OVMF_VARS.4m.fd"
+        echo "Error: OVMF_VARS.fd source not found."
         exit 1
     fi
 fi
@@ -31,18 +45,19 @@ if [ ! -f "$VDISK" ]; then
     qemu-img create -f qcow2 "$VDISK" 10G
 fi
 
+# --- Run QEMU ---
 exec qemu-system-x86_64 \
+    -enable-kvm \
+    -cpu host \
+    -smp 4,sockets=1,cores=4,threads=1 \
+    -m 4G \
+    -machine q35 \
     -cdrom "$ISO" \
     -boot d \
-    -m 2G \
-    -enable-kvm \
-    -machine pc-q35-9.0 \
-    -cpu host \
-    -smp 4 \
-    -display default \
-    -device virtio-vga \
+    -display sdl,gl=on \
+    -device virtio-vga-gl \
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
     -drive if=pflash,format=raw,file="$OVMF_VARS" \
-    -drive id=vdisk,file="$VDISK",if=none,format=qcow2 \
+    -drive id=vdisk,file="$VDISK",if=none,format=qcow2,cache=writeback,aio=io_uring \
     -device virtio-blk-pci,drive=vdisk \
-    -virtfs local,path=$HOME/Projects/shared,mount_tag=shared,security_model=mapped,id=hostshared
+    -virtfs local,path="$SHARED_DIR",mount_tag=shared,security_model=mapped,id=hostshared
