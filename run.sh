@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PROFILE_DIR="$(cd "$(dirname "$0")" && pwd)"
-ISO="$PROFILE_DIR/out/archlinux-baseline-2026.07.21-x86_64.iso"
+ISO="$PROFILE_DIR/out/archlinux-baseline-2026.07.22-x86_64.iso"
 
 [ -f "$ISO" ] || { echo "ISO not found: $ISO"; exit 1; }
 
@@ -45,4 +45,4 @@ exec qemu-system-x86_64 \
     -drive if=pflash,format=raw,file="$OVMF_VARS" \
     -drive id=vdisk,file="$VDISK",if=none,format=qcow2 \
     -device virtio-blk-pci,drive=vdisk \
-    -virtfs local,path=/home/power007/Projects/shared,mount_tag=shared,security_model=mapped,id=hostshared
+    -virtfs local,path=$HOME/Projects/shared,mount_tag=shared,security_model=mapped,id=hostshared
