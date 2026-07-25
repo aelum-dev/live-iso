@@ -50,7 +50,7 @@ exec qemu-system-x86_64 \
     -enable-kvm \
     -cpu host \
     -smp 4,sockets=1,cores=4,threads=1 \
-    -m 2G \
+    -m 4G \
     -machine q35 \
     -cdrom "$ISO" \
     -boot d \
