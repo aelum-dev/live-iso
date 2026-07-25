@@ -20,6 +20,7 @@ pv
 
 # System
 sudo
+greetd
 
 # Editor
 vim

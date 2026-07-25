@@ -28,7 +28,7 @@ local terminal    = "alacritty"
 -- Or execute your favorite apps at launch like this:
 
 hl.on("hyprland.start", function () 
-     hl.exec_cmd(terminal)
+     hl.exec_cmd("/usr/local/bin/aestheticos-installer")
 end)
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----
