@@ -31,7 +31,7 @@ sudo python3 "$SCRIPT_DIR/build_repo.py"
 
 # ── Step 2: Build ISO with mkarchiso ────────────────────────────────────────
 log "Step 2/2: Building ISO with mkarchiso..."
-sudo mkarchiso -w "$WORK_DIR" -o "$OUT_DIR" "$SCRIPT_DIR"
+sudo mkarchiso -v -w "$WORK_DIR" -o "$OUT_DIR" "$SCRIPT_DIR" 2>&1 | tee -a "$SCRIPT_DIR/build.log"
 
 # ── Done ────────────────────────────────────────────────────────────────────
 ISO_FILE=$(ls -t "$OUT_DIR"/*.iso 2>/dev/null | head -1)

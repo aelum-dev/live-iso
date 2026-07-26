@@ -11,10 +11,13 @@ Final repo is created at /tmp/aestheticos-packages/repo/ and copied to airootfs/
 
 import argparse
 import glob
+import json
 import os
 import shutil
 import subprocess
 import sys
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 # ── Paths ────────────────────────────────────────────────────────────────────
@@ -33,6 +36,24 @@ REPO_DB_NAME = "custom.db.tar.zst"
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def log(msg: str):
     print(f"[build_repo] {msg}")
+
+
+def _aur_api_request(endpoint: str, params: dict) -> dict:
+    """Make a request to the AUR RPC API v5 and return the parsed JSON response."""
+    url = f"https://aur.archlinux.org{endpoint}"
+    query = urllib.parse.urlencode(params, doseq=True)
+    full_url = f"{url}?{query}"
+    log(f"  AUR API: {endpoint}?{query}")
+    try:
+        with urllib.request.urlopen(full_url, timeout=30) as response:
+            data = json.loads(response.read().decode())
+            if data.get("type") == "error":
+                log(f"  AUR API error: {data.get('error', 'unknown')}")
+                return {"results": []}
+            return data
+    except Exception as e:
+        log(f"  AUR API request failed: {e}")
+        return {"results": []}
 
 
 def read_package_list(filepath: Path) -> list[str]:
@@ -145,44 +166,42 @@ def download_aur_manual(packages: list[str], force: bool = False):
         run(user_cmd + ["makepkg", "-s", "--noconfirm", "--force"], cwd=pkg_dir)
 
 
-def _parse_aur_dependencies(packages: list[str]) -> list[str]:
-    """Parse AUR PKGBUILDs to extract dependencies."""
-    CACHE_AUR.mkdir(parents=True, exist_ok=True)
+def _get_aur_dependencies(packages: list[str]) -> list[str]:
+    """Get AUR package dependencies via the AUR RPC API v5."""
     extra_deps = []
+    # The API has a ~200 package limit per request, so batch
+    batch_size = 150
 
-    for pkg in packages:
-        pkg_dir = CACHE_AUR / pkg
-        pkgbuild = pkg_dir / "PKGBUILD"
+    for i in range(0, len(packages), batch_size):
+        batch = packages[i : i + batch_size]
+        data = _aur_api_request("/rpc/v5/info", {"arg": batch})
 
-        if not pkgbuild.exists():
-            continue
+        for pkg_info in data.get("results", []):
+            pkg_name = pkg_info.get("Name", "")
+            deps = pkg_info.get("Depends", [])
+            makedeps = pkg_info.get("MakeDepends", [])
+            checkdeps = pkg_info.get("CheckDepends", [])
 
-        log(f"  Parsing dependencies for {pkg}...")
-        with open(pkgbuild) as f:
-            content = f.read()
-
-        # Extract depends array
-        import re
-        depends_match = re.search(r"depends=\(([^)]*)\)", content, re.DOTALL)
-        if depends_match:
-            deps_str = depends_match.group(1)
-            # Split by whitespace, handling multi-line
-            deps = deps_str.split()
-            for dep in deps:
-                # Remove version constraints (e.g., "glibc>=2.34" -> "glibc")
-                dep_name = re.split(r">=<", dep)[0]
-                if dep_name and dep_name not in extra_deps:
-                    extra_deps.append(dep_name)
+            # Collect all dependency types (except self-reference)
+            for dep_list in (deps, makedeps, checkdeps):
+                if not dep_list:
+                    continue
+                for dep in dep_list:
+                    # Deps may have version constraints like "glibc>=2.34"
+                    dep_name = dep.split(">=")[0].split("<=")[0].split(">")[0].split("<")[0]
+                    # Skip empty strings and self-references
+                    if dep_name and dep_name != pkg_name and dep_name not in extra_deps:
+                        extra_deps.append(dep_name)
 
     if extra_deps:
-        log(f"  Found {len(extra_deps)} extra dependencies from AUR packages")
+        log(f"  Found {len(extra_deps)} extra dependencies from AUR packages via API")
     return extra_deps
 
 
 def download_aur(packages: list[str], force: bool = False):
     """Download AUR packages via git clone + makepkg (most reliable)."""
-    # First, parse dependencies from AUR PKGBUILDs
-    extra_deps = _parse_aur_dependencies(packages)
+    # Get dependencies from AUR API
+    extra_deps = _get_aur_dependencies(packages)
 
     # Store extra deps for the main function to use
     download_aur.extra_deps = extra_deps
@@ -314,21 +333,12 @@ def main():
         log("ERROR: No packages to process!")
         sys.exit(1)
 
-    # Parse AUR dependencies first (need to clone repos first)
+    # Parse AUR dependencies using the AUR RPC API
     extra_aur_deps = []
     if aur_pkgs:
         log("")
-        log("── Parsing AUR dependencies ──")
-        # Clone AUR repos first to parse PKGBUILDs
-        CACHE_AUR.mkdir(parents=True, exist_ok=True)
-        for pkg in aur_pkgs:
-            pkg_dir = CACHE_AUR / pkg
-            if pkg_dir.exists():
-                run(["git", "-C", str(pkg_dir), "pull"], check=False)
-            else:
-                run(["git", "clone", f"https://aur.archlinux.org/{pkg}.git", str(pkg_dir)])
-
-        extra_aur_deps = _parse_aur_dependencies(aur_pkgs)
+        log("── Fetching AUR dependencies via API ──")
+        extra_aur_deps = _get_aur_dependencies(aur_pkgs)
 
     # Combine official packages with AUR dependencies
     all_official_pkgs = list(official_pkgs)

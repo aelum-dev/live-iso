@@ -1,10 +1,10 @@
 # Local repository (built by build.sh, not tracked in git)
-/repo/
-/airootfs/repo
-/work/
-/__pycache__/
+repo
+airootfs/repo
+work
+__pycache__
 
 # Build artifacts
-/out/
+out
 OVMF_VARS.fd
 vdisk.qcow2
