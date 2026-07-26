@@ -1,72 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROFILE_DIR="$(cd "$(dirname "$0")" && pwd)"
-WORK_DIR="/tmp/archiso-build"
-ISO_DIR="out"
-REPO_DIR="$PROFILE_DIR/airootfs/repo"
-BLANK_DB="/tmp/blankdb"
-DOWNLOAD_DIR="/tmp/archiso-download"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
 
-echo "=== Offline ArchISO Builder ==="
-echo "Profile: $PROFILE_DIR"
-echo "Work dir: $WORK_DIR"
-echo "Iso dir: $ISO_DIR"
-echo "Local repo: $REPO_DIR"
+# ── Config ──────────────────────────────────────────────────────────────────
+WORK_DIR="${SCRIPT_DIR}/work"
+OUT_DIR="${SCRIPT_DIR}/out"
+PROFILE="profiledef.sh"
 
-# ── Step 1: Clean previous build artifacts ──────────────────────────────────
-sudo rm -rf "$WORK_DIR"
-sudo mkdir -p "$WORK_DIR"
-sudo mkdir -p "$ISO_DIR"
-sudo rm -rf "$BLANK_DB"
-sudo rm -rf "$DOWNLOAD_DIR"
+# ── Colors ──────────────────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-# ── Step 2: Download packages ───────────────────────────────────────────────
-echo ""
-echo "=== Downloading packages ==="
-mkdir -p "$REPO_DIR"
-mkdir -p "$DOWNLOAD_DIR"
-mkdir -p "$BLANK_DB"
+log()    { echo -e "${GREEN}[build]${NC} $*"; }
+warn()   { echo -e "${YELLOW}[warn]${NC} $*"; }
+err()    { echo -e "${RED}[error]${NC} $*" >&2; }
 
-# Use existing repo packages as cache to avoid re-downloading
-sudo cp "$REPO_DIR"/*.pkg.tar.zst "$DOWNLOAD_DIR/" 2>/dev/null || true
+# ── Cleanup old work dir ────────────────────────────────────────────────────
+if [ -d "$WORK_DIR" ]; then
+    log "Cleaning old work directory..."
+    sudo rm -rf "$WORK_DIR"
+fi
 
-# Read packages from packages.x86_64 (skip blank lines and comments)
-PACKAGES=()
-while IFS= read -r line; do
-    line="${line%%#*}"
-    line="${line#"${line%%[![:space:]]*}"}"
-    line="${line%"${line##*[![:space:]]}"}"
-    [[ -n "$line" ]] && PACKAGES+=("$line")
-done < "$PROFILE_DIR/packages.x86_64"
+# ── Step 1: Build local repo ────────────────────────────────────────────────
+log "Step 1/2: Building local repository..."
+sudo python3 "$SCRIPT_DIR/build_repo.py"
 
-echo "Packages: ${PACKAGES[*]}"
+# ── Step 2: Build ISO with mkarchiso ────────────────────────────────────────
+log "Step 2/2: Building ISO with mkarchiso..."
+sudo mkarchiso -w "$WORK_DIR" -o "$OUT_DIR" "$SCRIPT_DIR"
 
-# Download ALL packages using blank dbpath and temp cachedir (bypasses pacman 7 alpm-user isolation)
-sudo pacman -Syw --noconfirm \
-    --cachedir "$DOWNLOAD_DIR" \
-    --dbpath "$BLANK_DB" \
-    "${PACKAGES[@]}"
-
-# Copy downloaded packages to repo directory
-sudo cp "$DOWNLOAD_DIR"/*.pkg.tar.zst "$REPO_DIR/"
-sudo rm -rf "$DOWNLOAD_DIR"
-
-# Create the repo database
-sudo repo-add -q "$REPO_DIR/custom.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null
-
-echo "Local repo built: $(ls "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null | wc -l) packages"
-
-# ── Step 3: Run mkarchiso ───────────────────────────────────────────────────
-# Note: mkarchiso uses the profile's pacman.conf for pacstrap.
-# The profile pacman.conf has [custom] pointing to file://FILE_REPO_PATH,
-# but we don't use it during build (pacstrap uses core/extra from mirrorlist).
-# The local repo in airootfs/repo is only for the final ISO.
-echo ""
-echo "=== Running mkarchiso ==="
-sudo mkarchiso -w "$WORK_DIR" -v -m iso -o "$ISO_DIR" -r "$PROFILE_DIR"
-
-echo ""
-echo "=== Build complete ==="
-echo "ISO location:"
-ls -lh "$ISO_DIR"/*.iso 2>/dev/null || echo "No ISO found in $ISO_DIR"
+# ── Done ────────────────────────────────────────────────────────────────────
+ISO_FILE=$(ls -t "$OUT_DIR"/*.iso 2>/dev/null | head -1)
+if [ -n "$ISO_FILE" ] && [ -f "$ISO_FILE" ]; then
+    log "ISO built successfully: $ISO_FILE"
+    log "Size: $(du -h "$ISO_FILE" | cut -f1)"
+else
+    err "ISO file not found in $OUT_DIR"
+    exit 1
+fi

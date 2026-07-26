@@ -1,1 +1,1 @@
-aestheticos ALL=(ALL) NOPASSWD: /usr/local/bin/aestheticos-helper
+aestheticos ALL=(ALL) NOPASSWD: /usr/local/bin/aestheticos-helper, /shared/aestheticos-helper

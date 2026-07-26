@@ -21,21 +21,49 @@ pv
 # System
 sudo
 greetd
+greetd-agreety
+uwsm
+brightnessctl
+ddcutil
+bluez
 
 # Editor
 vim
 nano
 
+# Network
+networkmanager
+
 # Desktop
 btop
 fastfetch
 hyprland
+quickshell
+dms-shell-hyprland
 noto-fonts
 adwaita-cursors
 alacritty
 webkit2gtk-4.1
+cava
+dgop
+matugen
+nautilus
+firefox
 
 # GPU drivers
 vulkan-radeon
 vulkan-intel
 vulkan-nouveau
+
+# Fonts
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+terminus-font
+
+# Audio
+pipewire
+pipewire-pulse
+pipewire-alsa
+pipewire-jack
+wireplumber
