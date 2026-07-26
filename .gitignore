@@ -2,8 +2,9 @@
 /repo/
 /airootfs/repo
 /work/
+/__pycache__/
 
 # Build artifacts
 /out/
 OVMF_VARS.fd
-vdisk.qcow2__pycache__/
+vdisk.qcow2
