@@ -172,15 +172,16 @@ def download_aur_manual(packages: list[str], force: bool = False):
 
 
 def _get_aur_dependencies(packages: list[str]) -> list[str]:
-    """Get AUR package dependencies via the AUR RPC API v5."""
+    """Get AUR package dependencies via the AUR RPC API v5.
+    
+    Note: The AUR API v5 only returns 1 result when multiple arg= params are passed,
+    so we must query each package individually.
+    """
     extra_deps = []
-    # The API has a ~200 package limit per request, so batch
-    batch_size = 150
 
-    for i in range(0, len(packages), batch_size):
-        batch = packages[i : i + batch_size]
-        data = _aur_api_request("/rpc/v5/info", {"arg": batch})
-
+    for pkg in packages:
+        data = _aur_api_request("/rpc/v5/info", {"arg": pkg})
+        
         for pkg_info in data.get("results", []):
             pkg_name = pkg_info.get("Name", "")
             deps = pkg_info.get("Depends", [])
