@@ -129,7 +129,7 @@ def download_aur_manual(packages: list[str], force: bool = False):
     CACHE_AUR.mkdir(parents=True, exist_ok=True)
     user_cmd = _get_user_cmd()
 
-    # Fix permissions if running as root
+    # If running as root, chown the cache dir to SUDO_USER so makepkg can write
     if os.geteuid() == 0:
         user = os.environ.get("SUDO_USER", "power007")
         run(["chown", "-R", f"{user}:{user}", str(CACHE_AUR)])
@@ -154,6 +154,11 @@ def download_aur_manual(packages: list[str], force: bool = False):
                     str(pkg_dir),
                 ]
             )
+
+        # Chown after git clone/pull — root created these files when run via sudo
+        if os.geteuid() == 0:
+            user = os.environ.get("SUDO_USER", "power007")
+            run(["chown", "-R", f"{user}:{user}", str(pkg_dir)])
 
         # Clean previous build artifacts when force-rebuilding
         if force and pkg_dir.exists():
@@ -242,8 +247,17 @@ def build_local_repo():
 
     # Fix ownership consistency (mix of root/user from pacman/makepkg)
     if os.geteuid() == 0:
+        # Running as root — chown everything to SUDO_USER so the cache is usable
         user = os.environ.get("SUDO_USER", "power007")
         run(["chown", "-R", f"{user}:{user}", str(REPO_DIR)])
+    else:
+        # Running as normal user — pacman ran via sudo, files are root-owned.
+        # Need sudo to chown them. If sudo isn't available, warn but continue.
+        user = os.environ.get("SUDO_USER", os.environ.get("USER", "power007"))
+        try:
+            run(["sudo", "chown", "-R", f"{user}:{user}", str(REPO_DIR)])
+        except subprocess.CalledProcessError:
+            log("  WARNING: Could not chown REPO_DIR (pacman files were root-owned). repo-add may fail.")
 
     # Remove old database if present
     old_db = REPO_DIR / REPO_DB_NAME
@@ -279,6 +293,13 @@ def deploy_to_airootfs():
     if os.geteuid() == 0:
         user = os.environ.get("SUDO_USER", "power007")
         run(["chown", "-R", f"{user}:{user}", str(AIROOTFS_REPO)])
+    else:
+        # If running as normal user, airootfs/repo/ must be writable by us already
+        user = os.environ.get("SUDO_USER", os.environ.get("USER", "power007"))
+        try:
+            run(["sudo", "chown", "-R", f"{user}:{user}", str(AIROOTFS_REPO)])
+        except subprocess.CalledProcessError:
+            log("  WARNING: Could not chown AIROOTFS_REPO after deploy.")
 
     log(f"Deployed {len(list(REPO_DIR.glob('*.pkg.tar.zst')))} packages to {AIROOTFS_REPO}")
 
