@@ -3,7 +3,6 @@ set -euo pipefail
 
 PROFILE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Автопоиск ISO в папке out/ (или передача пути первым аргументом: ./run.sh path/to.iso)
 ISO="${1:-$(find "$PROFILE_DIR/out" -maxdepth 1 -name "*.iso" 2>/dev/null | head -1)}"
 
 if [ -z "$ISO" ] || [ ! -f "$ISO" ]; then
@@ -18,7 +17,6 @@ SHARED_DIR="$HOME/Projects/shared"
 mkdir -p "$SHARED_DIR"
 
 # --- UEFI firmware setup ---
-# Приоритет отдаем парным 4M файлам edk2
 OVMF_CODE=$(find /usr/share/edk2/x64 /usr/share/OVMF -name "OVMF_CODE.4m.fd" 2>/dev/null | head -1)
 [ -n "$OVMF_CODE" ] || OVMF_CODE=$(find /usr/share/edk2/x64 /usr/share/OVMF -name "OVMF_CODE*.fd" 2>/dev/null | head -1)
 
@@ -42,7 +40,7 @@ fi
 VDISK="$PROFILE_DIR/vdisk.qcow2"
 if [ ! -f "$VDISK" ]; then
     echo "Creating virtual disk: $VDISK (10G) ..."
-    qemu-img create -f qcow2 "$VDISK" 10G
+    qemu-img create -f qcow2 "$VDISK" 16G
 fi
 
 # --- Run QEMU ---
