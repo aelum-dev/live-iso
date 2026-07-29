@@ -13,6 +13,7 @@ import argparse
 import glob
 import json
 import os
+import pwd
 import shutil
 import subprocess
 import sys
@@ -36,6 +37,13 @@ REPO_DB_NAME = "custom.db.tar.zst"
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def log(msg: str):
     print(f"[build_repo] {msg}")
+
+
+def _current_user() -> str:
+    """Resolve the current non-root username."""
+    if os.geteuid() == 0:
+        return os.environ.get("SUDO_USER", pwd.getpwuid(os.getuid()).pw_name)
+    return pwd.getpwuid(os.getuid()).pw_name
 
 
 def _aur_api_request(endpoint: str, params: dict) -> dict:
@@ -119,7 +127,7 @@ def _aur_pkg_already_cached(pkg_name: str) -> bool:
 def _get_user_cmd():
     """Get command prefix to run as current user (not root)."""
     if os.geteuid() == 0:
-        user = os.environ.get("SUDO_USER", "power007")
+        user = _current_user()
         return ["sudo", "-u", user]
     return []
 
@@ -131,7 +139,7 @@ def download_aur_manual(packages: list[str], force: bool = False):
 
     # If running as root, chown the cache dir to SUDO_USER so makepkg can write
     if os.geteuid() == 0:
-        user = os.environ.get("SUDO_USER", "power007")
+        user = _current_user()
         run(["chown", "-R", f"{user}:{user}", str(CACHE_AUR)])
 
     for pkg in packages:
@@ -157,7 +165,7 @@ def download_aur_manual(packages: list[str], force: bool = False):
 
         # Chown after git clone/pull — root created these files when run via sudo
         if os.geteuid() == 0:
-            user = os.environ.get("SUDO_USER", "power007")
+            user = _current_user()
             run(["chown", "-R", f"{user}:{user}", str(pkg_dir)])
 
         # Clean previous build artifacts when force-rebuilding
@@ -249,12 +257,12 @@ def build_local_repo():
     # Fix ownership consistency (mix of root/user from pacman/makepkg)
     if os.geteuid() == 0:
         # Running as root — chown everything to SUDO_USER so the cache is usable
-        user = os.environ.get("SUDO_USER", "power007")
+        user = _current_user()
         run(["chown", "-R", f"{user}:{user}", str(REPO_DIR)])
     else:
         # Running as normal user — pacman ran via sudo, files are root-owned.
         # Need sudo to chown them. If sudo isn't available, warn but continue.
-        user = os.environ.get("SUDO_USER", os.environ.get("USER", "power007"))
+        user = _current_user()
         try:
             run(["sudo", "chown", "-R", f"{user}:{user}", str(REPO_DIR)])
         except subprocess.CalledProcessError:
@@ -292,11 +300,11 @@ def deploy_to_airootfs():
 
     # Fix ownership in deployed repo too
     if os.geteuid() == 0:
-        user = os.environ.get("SUDO_USER", "power007")
+        user = _current_user()
         run(["chown", "-R", f"{user}:{user}", str(AIROOTFS_REPO)])
     else:
         # If running as normal user, airootfs/repo/ must be writable by us already
-        user = os.environ.get("SUDO_USER", os.environ.get("USER", "power007"))
+        user = _current_user()
         try:
             run(["sudo", "chown", "-R", f"{user}:{user}", str(AIROOTFS_REPO)])
         except subprocess.CalledProcessError:

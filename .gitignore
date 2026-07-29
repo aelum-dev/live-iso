@@ -3,6 +3,7 @@ repo
 airootfs/repo
 work
 __pycache__
+build.log
 
 # Build artifacts
 out
