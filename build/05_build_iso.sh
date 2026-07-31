@@ -50,6 +50,25 @@ if [[ ! -f "$PROJECT_ROOT/pacman.conf" ]]; then
     exit 1
 fi
 
+# --- Clean work directory ---
+if [[ -d "$PROJECT_ROOT/work" ]]; then
+    log "Removing old work directory..."
+    rm -rf "$PROJECT_ROOT/work"
+    ok "Work directory cleaned"
+    echo ""
+fi
+
+# --- Fix pacman.conf with absolute path ---
+# mkarchiso uses chroot, so file:// URLs must be absolute paths
+OFFLINE_MIRROR_PATH="$PROJECT_ROOT/airootfs/var/cache/aestheticos/offline-mirror"
+PACMAN_CONF="$PROJECT_ROOT/pacman.conf"
+
+if [[ -f "$PACMAN_CONF" ]]; then
+    # Replace relative path with absolute path
+    sed -i "s|Server = file:///airootfs|Server = file://$OFFLINE_MIRROR_PATH|" "$PACMAN_CONF"
+    log "Fixed pacman.conf: Server = file://$OFFLINE_MIRROR_PATH"
+fi
+
 log "Starting ISO build..."
 echo ""
 

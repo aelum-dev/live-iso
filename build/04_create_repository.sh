@@ -84,6 +84,7 @@ if [[ $final_count -eq 0 ]]; then
 fi
 
 # Create aestheticos-offline.db.tar.zst using repo-add
+# repo-add automatically creates .db.tar.zst, .files.tar.zst and symlinks .db, .files
 repo-add "$REPO_DIR/aestheticos-offline.db.tar.zst" "$REPO_DIR"/*.pkg.tar.* 2>&1 | tail -5
 
 ok "Repository database created"
