@@ -13,7 +13,7 @@ AUR_API="https://aur.archlinux.org/rpc/v5"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="$PROJECT_ROOT/downloads/aur_build"
-DOWNLOAD_SCRIPT="$SCRIPT_DIR/download_packages.sh"
+DOWNLOAD_SCRIPT="$SCRIPT_DIR/01_download_packages.sh"
 
 # --- Helpers ---
 log() { echo "==> $*"; }
@@ -183,7 +183,7 @@ if [[ ${#ALL_OFFICIAL_DEPS[@]} -gt 0 ]]; then
             # download_packages.sh handles sudo and sync internally
             bash "$DOWNLOAD_SCRIPT" "$OFFICIAL_DEPS_FILE" "$OFFICIAL_DL_DIR"
         else
-            warn "download_packages.sh not found, trying pacman directly..."
+            warn "01_download_packages.sh not found, trying pacman directly..."
             pacman -Sw --cachedir="$OFFICIAL_DL_DIR" --noconfirm "${NEED_DOWNLOAD[@]}" 2>&1 || true
         fi
         
@@ -237,7 +237,7 @@ echo ""
 echo "AUR packages ready to build: ${#ALL_AUR_PKGS[@]}"
 echo "Official dependencies: ${#ALL_OFFICIAL_DEPS[@]}"
 echo ""
-echo "Next step: run build_aur.sh to compile AUR packages"
+echo "Next step: run 03_build_aur.sh to compile AUR packages"
 echo ""
 echo "AUR sources in: $BUILD_DIR"
 echo "Official packages in: $PROJECT_ROOT/downloads/official_packages"

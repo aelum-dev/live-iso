@@ -34,7 +34,7 @@ fi
 
 # if [[ ! -d "$BUILD_DIR" ]]; then
 #     echo "Error: Build directory not found: $BUILD_DIR"
-#     echo "Run download_aur.sh first to download PKGBUILDs."
+#     echo "Run 02_download_aur.sh first to download PKGBUILDs."
 #     exit 1
 # fi
 
@@ -47,7 +47,7 @@ done
 
 if [[ $pkg_count -eq 0 ]]; then
     echo "Error: No PKGBUILDs found in $BUILD_DIR"
-    echo "Run download_aur.sh first to download PKGBUILDs."
+    echo "Run 02_download_aur.sh first to download PKGBUILDs."
     exit 1
 fi
 
@@ -67,7 +67,7 @@ echo "aur_packages is empty, downloading and building..."
 echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-bash "$SCRIPT_DIR/download_aur.sh"
+bash "$SCRIPT_DIR/02_download_aur.sh"
 echo ""
 
 # --- Check which packages are already built ---
