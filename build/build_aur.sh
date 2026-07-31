@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+#
+# Build AUR packages from PKGBUILDs.
+# - Compiles packages from downloads/aur_build
+# - Moves built .pkg.tar.zst to downloads/aur_packages
+#
+
+set -euo pipefail
+
+# --- Config ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+BUILD_DIR="$PROJECT_ROOT/downloads/aur_build"
+DOWNLOAD_DIR="$PROJECT_ROOT/downloads/aur_packages"
+
+# --- Helpers ---
+log() { echo "==> $*"; }
+ok()  { echo "  ✓ $*"; }
+err() { echo "  ✗ $*"; }
+warn() { echo "  ⚠ $*"; }
+
+# --- Args (optional) ---
+BUILD_DIR="${1:-$BUILD_DIR}"
+DOWNLOAD_DIR="${2:-$DOWNLOAD_DIR}"
+
+if [[ $# -gt 2 ]]; then
+    echo "Usage: $0 [build_dir] [download_dir]"
+    echo ""
+    echo "Defaults:"
+    echo "  build_dir      $PROJECT_ROOT/downloads/aur_build"
+    echo "  download_dir   $PROJECT_ROOT/downloads/aur_packages"
+    exit 1
+fi
+
+# if [[ ! -d "$BUILD_DIR" ]]; then
+#     echo "Error: Build directory not found: $BUILD_DIR"
+#     echo "Run download_aur.sh first to download PKGBUILDs."
+#     exit 1
+# fi
+
+# --- Check for PKGBUILDs ---
+pkg_count=0
+for pkg_dir in "$BUILD_DIR"/*/; do
+    [[ ! -d "$pkg_dir" ]] && continue
+    [[ -f "$pkg_dir/PKGBUILD" ]] && ((pkg_count++)) || true
+done
+
+if [[ $pkg_count -eq 0 ]]; then
+    echo "Error: No PKGBUILDs found in $BUILD_DIR"
+    echo "Run download_aur.sh first to download PKGBUILDs."
+    exit 1
+fi
+
+log "Found $pkg_count packages to build"
+echo ""
+
+# --- Check if aur_packages is empty ---
+pkg_count_downloaded=$(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.pkg.tar.*' 2>/dev/null | wc -l)
+if [[ $pkg_count_downloaded -gt 0 ]]; then
+    log "aur_packages is not empty ($pkg_count_downloaded packages found)"
+    log "Skip building. Clean $DOWNLOAD_DIR to rebuild."
+    exit 0
+fi
+
+# aur_packages is empty - download and build
+echo "aur_packages is empty, downloading and building..."
+echo ""
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$SCRIPT_DIR/download_aur.sh"
+echo ""
+
+# --- Check which packages are already built ---
+log "Checking for already built packages..."
+declare -A BUILT_PKGS
+if [[ -d "$DOWNLOAD_DIR" ]]; then
+    while IFS= read -r -d '' pkg_file; do
+        pkg_full=$(basename "$pkg_file" .pkg.tar.zst)
+        pkg_name="${pkg_full%%-*}"
+        BUILT_PKGS["$pkg_name"]=1
+    done < <(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.pkg.tar.zst' -print0 2>/dev/null)
+fi
+
+BUILT_COUNT=0
+for pkg_dir in "$BUILD_DIR"/*/; do
+    [[ ! -d "$pkg_dir" ]] && continue
+    pkg_name=$(basename "$pkg_dir")
+    [[ ! -f "$pkg_dir/PKGBUILD" ]] && continue
+    
+    if [[ -n "${BUILT_PKGS[$pkg_name]:-}" ]]; then
+        ok "Already built: $pkg_name"
+        ((BUILT_COUNT++)) || true
+    fi
+done
+
+if [[ $BUILT_COUNT -eq $pkg_count ]]; then
+    log "All packages already built!"
+    log "Copying to $DOWNLOAD_DIR..."
+    for pkg_dir in "$BUILD_DIR"/*/; do
+        [[ ! -d "$pkg_dir" ]] && continue
+        pkg_name=$(basename "$pkg_dir")
+        [[ ! -f "$pkg_dir/PKGBUILD" ]] && continue
+        
+        # Copy already built packages
+        for pkg_file in "$DOWNLOAD_DIR"/${pkg_name}*.pkg.tar.*; do
+            [[ -f "$pkg_file" ]] && cp "$pkg_file" "$DOWNLOAD_DIR/"
+        done
+    done
+    ok "All packages copied to $DOWNLOAD_DIR"
+    echo ""
+    echo "============================================================"
+    echo "All packages already built and copied!"
+    echo "============================================================"
+    exit 0
+fi
+echo ""
+
+# --- Build packages ---
+log "Building packages in $BUILD_DIR..."
+mkdir -p "$DOWNLOAD_DIR"
+
+built=()
+failed=()
+
+for pkg_dir in "$BUILD_DIR"/*/; do
+    [[ ! -d "$pkg_dir" ]] && continue
+    pkg_name=$(basename "$pkg_dir")
+
+    if [[ ! -f "$pkg_dir/PKGBUILD" ]]; then
+        warn "No PKGBUILD in $pkg_name, skipping"
+        continue
+    fi
+
+    # Skip if already built
+    if [[ -n "${BUILT_PKGS[$pkg_name]:-}" ]]; then
+        ok "Already built: $pkg_name"
+        continue
+    fi
+
+    log "Building $pkg_name..."
+    cd "$pkg_dir"
+
+    if makepkg --noconfirm --nocheck --skipinteg 2>&1; then
+        for pkg_file in *.pkg.tar.*; do
+            [[ -f "$pkg_file" ]] && mv "$pkg_file" "$DOWNLOAD_DIR/"
+        done
+        ok "Built: $pkg_name"
+        built+=("$pkg_name")
+    else
+        err "Failed to build: $pkg_name"
+        failed+=("$pkg_name")
+    fi
+
+    cd - > /dev/null
+done
+
+# --- Cleanup (optional - comment out to keep cache) ---
+# log "Cleaning up build directory..."
+# rm -rf "$BUILD_DIR"
+# ok "Build directory cleaned"
+echo ""
+
+# --- Report ---
+echo "============================================================"
+echo "AUR Package Build Report"
+echo "============================================================"
+echo ""
+echo "Built successfully: ${#built[@]}"
+for pkg in "${built[@]}"; do
+    echo "  ✓ $pkg"
+done
+
+if [[ ${#failed[@]} -gt 0 ]]; then
+    echo ""
+    echo "Failed: ${#failed[@]}"
+    for pkg in "${failed[@]}"; do
+        echo "  ✗ $pkg"
+    done
+fi
+
+echo ""
+echo "Packages saved to: $DOWNLOAD_DIR"
+echo ""
+
+if [[ -d "$DOWNLOAD_DIR" ]]; then
+    pkg_count=$(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.pkg.tar.*' | wc -l)
+    echo "Total AUR packages in $DOWNLOAD_DIR: $pkg_count"
+fi

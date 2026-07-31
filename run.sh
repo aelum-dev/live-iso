@@ -3,10 +3,10 @@ set -euo pipefail
 
 PROFILE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-ISO="${1:-$(find "$PROFILE_DIR/out" -maxdepth 1 -name "*.iso" 2>/dev/null | head -1)}"
+ISO="${1:-$(find "$PROFILE_DIR/output" -maxdepth 1 -name "*.iso" 2>/dev/null | head -1)}"
 
 if [ -z "$ISO" ] || [ ! -f "$ISO" ]; then
-    echo "Error: ISO file not found in $PROFILE_DIR/out/"
+    echo "Error: ISO file not found in $PROFILE_DIR/output/"
     exit 1
 fi
 

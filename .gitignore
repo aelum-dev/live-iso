@@ -1,7 +1,10 @@
-# Local repository (built by build.sh, not tracked in git)
-repo
-airootfs/repo
-work
+# Local repository (built by dashboard, not tracked in git)
+work/
+output/
+downloads/
+build/aur_build
+airootfs/var/cache/aestheticos/offline-mirror
+
 __pycache__
 build.log
 
