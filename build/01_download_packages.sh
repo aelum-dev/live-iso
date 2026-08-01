@@ -64,21 +64,43 @@ echo "Packages file:  $PACKAGE_FILE"
 echo "Download dir:   $DOWNLOAD_DIR"
 echo ""
 
-# --- Check which packages are already downloaded ---
+# --- Check which packages are already downloaded (with version match) ---
 log "Checking for already downloaded packages..."
-declare -A DOWNLOADED_PKGS
+
+# Build a map of locally downloaded packages: name -> version
+# Uses pacman -Qp for reliable parsing (handles epochs like 2:8.1.2-11)
+declare -A LOCAL_VERSIONS
 if [[ -d "$DOWNLOAD_DIR" ]]; then
     while IFS= read -r -d '' pkg_file; do
-        pkg_full=$(basename "$pkg_file" .pkg.tar.zst)
-        pkg_name="${pkg_full%%-*}"  # extract package name (before first -)
-        DOWNLOADED_PKGS["$pkg_name"]=1
+        read -r pkg_name pkg_version < <(pacman -Qp "$pkg_file" 2>/dev/null | head -1)
+        [[ -z "$pkg_name" || -z "$pkg_version" ]] && continue
+        # Store the latest version per package name
+        if [[ -z "${LOCAL_VERSIONS[$pkg_name]:-}" || "$pkg_version" > "${LOCAL_VERSIONS[$pkg_name]}" ]]; then
+            LOCAL_VERSIONS["$pkg_name"]="$pkg_version"
+        fi
     done < <(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.pkg.tar.zst' -print0 2>/dev/null)
 fi
 
-# Filter out already downloaded packages
+# Query repo for available versions and filter
 NEED_DOWNLOAD=()
 for pkg in "${PACKAGES[@]}"; do
-    if [[ -z "${DOWNLOADED_PKGS[$pkg]:-}" ]]; then
+    # Get the available version from the synced repos
+    repo_version=$(run_as_root pacman -Si "$pkg" 2>/dev/null | grep '^Version' | awk '{print $2}')
+    if [[ -z "$repo_version" ]]; then
+        err "Could not find package '$pkg' in repos, forcing download"
+        NEED_DOWNLOAD+=("$pkg")
+        continue
+    fi
+
+    local_ver="${LOCAL_VERSIONS[$pkg]:-}"
+    if [[ -n "$local_ver" && "$local_ver" == "$repo_version" ]]; then
+        ok "Skipping $pkg (local=$local_ver, repo=$repo_version)"
+    else
+        if [[ -n "$local_ver" ]]; then
+            log "Updating $pkg: $local_ver -> $repo_version"
+        else
+            log "Downloading $pkg (version $repo_version)"
+        fi
         NEED_DOWNLOAD+=("$pkg")
     fi
 done
@@ -128,16 +150,42 @@ run_as_root pacman --cachedir="$DOWNLOAD_DIR" --dbpath="$TEMP_DB" -Sw --noconfir
 # --- Cleanup ---
 rm -rf "$TEMP_DB"
 
+# Remove old versions — keep only the latest version of each package
 downloaded=()
 while IFS= read -r -d '' f; do
     downloaded+=("$f")
 done < <(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.pkg.tar.zst' -print0 | sort -z)
 
+log "Cleaning up old package versions..."
+declare -A SEEN_VERSIONS  # pkg_name -> newest file path & version
+for pkg_file in "${downloaded[@]}"; do
+    read -r pkg_name pkg_version < <(pacman -Qp "$pkg_file" 2>/dev/null | head -1)
+    [[ -z "$pkg_name" || -z "$pkg_version" ]] && continue
+
+    if [[ -n "${SEEN_VERSIONS[$pkg_name]:-}" ]]; then
+        # Compare versions — remove the older one
+        older="${SEEN_VERSIONS[$pkg_name]}"
+        older_ver="${SEEN_VERSIONS[${pkg_name}__ver]}"
+        if [[ "$pkg_version" > "$older_ver" ]]; then
+            rm -f "$older" && ok "Removed old: $(basename "$older")"
+            SEEN_VERSIONS["$pkg_name"]="$pkg_file"
+            SEEN_VERSIONS["${pkg_name}__ver"]="$pkg_version"
+        else
+            rm -f "$pkg_file" && ok "Removed old: $(basename "$pkg_file")"
+        fi
+    else
+        SEEN_VERSIONS["$pkg_name"]="$pkg_file"
+        SEEN_VERSIONS["${pkg_name}__ver"]="$pkg_version"
+    fi
+done
+
 # --- Report ---
+remaining=0
+while IFS= read -r -d '' _; do ((remaining++)); done < <(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.pkg.tar.zst' -print0 2>/dev/null)
 echo ""
 echo "============================================================"
 echo "Done! Packages downloaded to $DOWNLOAD_DIR"
-echo "Total packages in $DOWNLOAD_DIR: ${#downloaded[@]}"
+echo "Total packages in $DOWNLOAD_DIR: $remaining"
 echo "============================================================"
 echo ""
 
