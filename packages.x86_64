@@ -26,6 +26,7 @@ uwsm
 brightnessctl
 ddcutil
 bluez
+power-profiles-daemon
 
 # Editor
 vim

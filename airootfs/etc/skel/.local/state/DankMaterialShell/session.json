@@ -3,7 +3,7 @@
   "doNotDisturb": false,
   "doNotDisturbUntil": 0,
   "terminalOverride": "",
-  "wallpaperPath": "{{WALLPAPER_PATH}}",
+  "wallpaperPath": "/usr/share/DankMaterialShell/wallpaper.jpg",
   "perMonitorWallpaper": false,
   "monitorWallpapers": {},
   "perModeWallpaper": false,
