@@ -46,6 +46,9 @@ hl.config({
 	master = {
 		mfact = 0.5,
 	},
+	ecosystem = {
+		no_update_news = true
+	}
 })
 
 hl.animation({ leaf = "windowsIn", enabled = true, speed = 3, bezier = "default" })
