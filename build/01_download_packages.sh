@@ -64,6 +64,12 @@ echo "Packages file:  $PACKAGE_FILE"
 echo "Download dir:   $DOWNLOAD_DIR"
 echo ""
 
+# --- Sync system databases first (needed for version checking) ---
+log "Syncing system package databases..."
+run_as_root pacman -Sy --noconfirm --disable-sandbox 2>/dev/null
+ok "System databases synced"
+echo ""
+
 # --- Check which packages are already downloaded (with version match) ---
 log "Checking for already downloaded packages..."
 
@@ -85,7 +91,7 @@ fi
 NEED_DOWNLOAD=()
 for pkg in "${PACKAGES[@]}"; do
     # Get the available version from the synced repos
-    repo_version=$(run_as_root pacman -Si "$pkg" 2>/dev/null | grep '^Version' | awk '{print $2}')
+    repo_version=$(run_as_root pacman -Si "$pkg" 2>/dev/null | grep '^Version' | awk '{print $3}')
     if [[ -z "$repo_version" ]]; then
         err "Could not find package '$pkg' in repos, forcing download"
         NEED_DOWNLOAD+=("$pkg")
@@ -129,10 +135,8 @@ mkdir -p "$TEMP_DB/sync" "$TEMP_DB/local"
 ok "Temporary database created at $TEMP_DB"
 echo ""
 
-# --- Step 3: Sync system databases first (needed for dependency resolution) ---
-log "Step 3: Syncing system package databases..."
-run_as_root pacman -Sy --noconfirm --disable-sandbox
-ok "System databases synced"
+# --- Step 3: (Databases already synced at start) ---
+log "Step 3: Skipping — databases already synced"
 
 # --- Step 4: Copy synced databases to temp_db ---
 log "Step 4: Preparing temporary database..."
