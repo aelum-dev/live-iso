@@ -1,15 +1,17 @@
 # AestheticOS
 
-A custom Arch Linux live ISO with a focus on aesthetics: seamless silent boot with Plymouth BGRT theme, greetd login manager, and a fully offline package mirror.
+A fully offline custom Arch Linux live ISO. **No internet required — ever.** Every package is cached locally in an embedded repository, so the ISO works completely air-gapped: boot it, install Arch Linux, and you never need a network connection during the install process.
+
+Paired with a polished aesthetic: seamless silent boot with Plymouth BGRT theme, greetd login manager, and a clean UEFI experience.
 
 ---
 
 ## Features
 
+- **📴 Fully offline** — every package embedded in the ISO, zero network dependency. Install Arch Linux on any machine without internet
 - **Silent boot** — no kernel messages, no console spam, just your OEM logo (BGRT) and a clean splash
 - **Plymouth BGRT theme** — preserves your UEFI firmware logo as the boot splash, flicker-free via SimpleDRM
 - **greetd + agreety + DankMaterialShell greeter** — fast login manager that launches the installer
-- **Fully offline** — all packages cached in a local repo, zero network dependency after build
 - **AUR support** — yay-bin and other AUR packages built into the ISO
 - **Systemd-boot (UEFI)** — clean EFI boot loader with deferred console takeover to retain the vendor logo
 
@@ -121,9 +123,9 @@ quiet splash loglevel=3 rd.udev.log_level=3 vt.global_cursor_default=0
 - Hook: `plymouth` added to mkinitcpio HOOKS in `airootfs/etc/mkinitcpio.conf.d/archiso.conf`
 - The pacman hook at `airootfs/etc/pacman.d/hooks/90-plymouth-theme.hook` auto-runs `plymouth-set-default-theme -R bgrt` after plymouth install
 
-### Offline Mirror
+### Fully Offline (No Internet Required)
 
-All packages are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via `file://` URL in the ISO's pacman.conf. The installed system has zero network dependency.
+All packages are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via `file://` URL in the ISO's pacman.conf. **The installed system has zero network dependency** — every package needed for installation is embedded in the ISO itself. Works completely air-gapped.
 
 ---
 
