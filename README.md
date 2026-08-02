@@ -125,7 +125,7 @@ quiet splash loglevel=3 rd.udev.log_level=3 vt.global_cursor_default=0
 
 ### Fully Offline (No Internet Required)
 
-All packages are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via `file://` URL in the ISO's pacman.conf. **The installed system has zero network dependency** — every package needed for installation is embedded in the ISO itself. Works completely air-gapped.
+All packages are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via `file://` URL in the ISO's pacman.conf. **The installed system has zero network dependency** — every package needed for installation is embedded in the ISO itself.
 
 ---
 
