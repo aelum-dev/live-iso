@@ -4,20 +4,20 @@ hl.env("DMS_RUN_GREETER", "1")
 
 hl.config({
     input = {
-		kb_layout = "us",
-		numlock_by_default = true,
-		follow_mouse = 0,
-		accel_profile = "flat",
-		touchpad = {
-			tap_to_click = true,
-			natural_scroll = true,
-		},
-	},
+                kb_layout = "us",
+                numlock_by_default = true,
+                follow_mouse = 0,
+                accel_profile = "flat",
+                touchpad = {
+                        tap_to_click = true,
+                        natural_scroll = true,
+                },
+        },
     misc = {
         disable_hyprland_logo = true,
         disable_splash_rendering = true,
     },
     ecosystem = {
-		no_update_news = true
-	}
+                no_update_news = true
+        }
 })
