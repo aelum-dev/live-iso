@@ -51,6 +51,14 @@ total_count=$((official_count + aur_count))
 log "Found $official_count official + $aur_count AUR packages"
 echo ""
 
+# --- Clean repository directory ---
+if [[ -d "$REPO_DIR" ]]; then
+    log "Removing old repository directory..."
+    rm -rf "$REPO_DIR"
+    ok "Repository directory cleaned"
+    echo ""
+fi
+
 # --- Create repository directory ---
 log "Creating repository directory..."
 mkdir -p "$REPO_DIR"

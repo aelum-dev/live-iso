@@ -39,7 +39,7 @@ fi
 # --- Virtual disk ---
 VDISK="$PROFILE_DIR/vdisk.qcow2"
 if [ ! -f "$VDISK" ]; then
-    echo "Creating virtual disk: $VDISK (10G) ..."
+    echo "Creating virtual disk: $VDISK (16G) ..."
     qemu-img create -f qcow2 "$VDISK" 16G
 fi
 
@@ -58,4 +58,9 @@ exec qemu-system-x86_64 \
     -drive if=pflash,format=raw,file="$OVMF_VARS" \
     -drive id=vdisk,file="$VDISK",if=none,format=qcow2,cache=writeback,aio=io_uring \
     -device virtio-blk-pci,drive=vdisk \
-    -virtfs local,path="$SHARED_DIR",mount_tag=shared,security_model=mapped,id=hostshared
+    -virtfs local,path="$SHARED_DIR",mount_tag=shared,security_model=mapped,id=hostshared \
+    -netdev user,id=net0,hostfwd=tcp::2222-:22 \
+    -device virtio-net-pci,netdev=net0 \
+    -device virtio-serial-pci \
+    -device virtserialport,chardev=vdagent,name=com.redhat.spice.0 \
+    -chardev qemu-vdagent,id=vdagent,name=vdagent,clipboard=on
