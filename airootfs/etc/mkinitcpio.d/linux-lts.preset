@@ -1,4 +1,4 @@
-# mkinitcpio preset file for the 'linux-lts' package on archiso
+# mkinitcpio preset file for the 'linux-lts' package on AestheticOS
 
 PRESETS=('archiso')
 
