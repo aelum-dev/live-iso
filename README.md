@@ -8,7 +8,7 @@ A custom Arch Linux live ISO with a focus on aesthetics: seamless silent boot wi
 
 - **Silent boot** — no kernel messages, no console spam, just your OEM logo (BGRT) and a clean splash
 - **Plymouth BGRT theme** — preserves your UEFI firmware logo as the boot splash, flicker-free via SimpleDRM
-- **greetd + agreety** — fast, minimal login manager
+- **greetd + agreety + DankMaterialShell greeter** — fast login manager that launches the installer
 - **Fully offline** — all packages cached in a local repo, zero network dependency after build
 - **AUR support** — yay-bin and other AUR packages built into the ISO
 - **Systemd-boot (UEFI)** — clean EFI boot loader with deferred console takeover to retain the vendor logo
@@ -27,7 +27,7 @@ A custom Arch Linux live ISO with a focus on aesthetics: seamless silent boot wi
 ├── OVMF_VARS.fd           # UEFI variables for QEMU
 ├── airootfs/              # Root filesystem for the ISO
 │   ├── etc/
-│   │   ├── greetd/            # greetd login manager config
+│   │   ├── greetd/            # greetd + DMS greeter config (launches installer)
 │   │   ├── mkinitcpio.conf.d/ # Live ISO mkinitcpio hooks
 │   │   ├── mkinitcpio.d/      # Kernel preset
 │   │   ├── pacman.d/hooks/    # Pacman hooks (e.g. plymouth theme setup)
