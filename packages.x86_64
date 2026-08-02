@@ -18,6 +18,9 @@ e2fsprogs
 btrfs-progs
 pv
 
+# Boot splash
+plymouth
+
 # System
 sudo
 greetd
