@@ -30,6 +30,7 @@ brightnessctl
 ddcutil
 bluez
 power-profiles-daemon
+zram-generator
 
 # Editor
 vim
