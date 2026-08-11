@@ -1,0 +1,10 @@
+{
+  "policies": {
+    "Preferences": {
+      "widget.gtk.libadwaita-colors.enabled": {
+        "Value": false,
+        "Status": "locked"
+      }
+    }
+  }
+}

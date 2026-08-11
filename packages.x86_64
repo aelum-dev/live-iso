@@ -31,6 +31,7 @@ ddcutil
 bluez
 power-profiles-daemon
 zram-generator
+lsof
 
 # Editor
 vim
@@ -38,6 +39,7 @@ nano
 
 # Network
 networkmanager
+iwd
 
 # Desktop
 btop
