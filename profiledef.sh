@@ -17,7 +17,7 @@ file_permissions=(
   ["/etc/shadow"]="0:0:400"
   ["/etc/sudoers.d/aestheticos"]="0:0:440"
   ["/home/aestheticos"]="1000:1000:755"
-  ["/usr/local/bin/aestheticos-helper"]="0:0:755"
   ["/usr/local/bin/aestheticos-installer"]="0:0:755"
   ["/usr/local/bin/aestheticos-installer-cli"]="0:0:755"
+  ["/usr/local/bin/generate-hyprland-monitor-config.sh"]="0:0:755"
 )

@@ -43,6 +43,10 @@ if [ ! -f "$VDISK" ]; then
     qemu-img create -f qcow2 "$VDISK" 16G
 fi
 
+# --- Display resolution ---
+XRES="${XRES:-1920}"
+YRES="${YRES:-1080}"
+
 # --- Run QEMU ---
 exec qemu-system-x86_64 \
     -enable-kvm \
@@ -53,7 +57,7 @@ exec qemu-system-x86_64 \
     -cdrom "$ISO" \
     -boot d \
     -display sdl,gl=on \
-    -device virtio-vga-gl \
+    -device virtio-vga-gl,xres=$XRES,yres=$YRES,edid=on \
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
     -drive if=pflash,format=raw,file="$OVMF_VARS" \
     -drive id=vdisk,file="$VDISK",if=none,format=qcow2,cache=writeback,aio=io_uring \

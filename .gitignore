@@ -4,7 +4,6 @@ output/
 downloads/
 build/aur_build
 airootfs/var/cache/aestheticos/offline-mirror
-airootfs/usr/local/bin
 
 __pycache__
 build.log
