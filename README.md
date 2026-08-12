@@ -1,6 +1,6 @@
 # AestheticOS
 
-A fully offline custom Arch Linux live ISO. **No internet required — ever.** Every package is cached locally in an embedded repository, so the ISO works completely air-gapped: boot it, install Arch Linux, and you never need a network connection during the install process.
+A fully offline custom AestheticOS live ISO. **No internet required — ever.** Every package is cached locally in an embedded repository, so the ISO works completely air-gapped: boot it, install Arch Linux, and you never need a network connection during the install process.
 
 Paired with a polished aesthetic: seamless silent boot with Plymouth BGRT theme, greetd login manager, and a clean UEFI experience.
 
@@ -8,7 +8,7 @@ Paired with a polished aesthetic: seamless silent boot with Plymouth BGRT theme,
 
 ## Features
 
-- **📴 Fully offline** — every package embedded in the ISO, zero network dependency. Install Arch Linux on any machine without internet
+- **📴 Fully offline** — every package embedded in the ISO, zero network dependency. Install on any machine without internet
 - **Silent boot** — no kernel messages, no console spam, just your OEM logo (BGRT) and a clean splash
 - **Plymouth BGRT theme** — preserves your UEFI firmware logo as the boot splash, flicker-free via SimpleDRM
 - **greetd + agreety + DankMaterialShell greeter** — fast login manager that launches the installer
