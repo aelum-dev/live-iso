@@ -9,6 +9,8 @@ qemu-guest-agent
 spice-vdagent
 edk2-shell
 memtest86+-efi
+syslinux
+grub
 
 # Utilities
 util-linux
@@ -41,6 +43,7 @@ nano
 # Network
 networkmanager
 iwd
+wireless-regdb
 
 # Desktop
 btop
