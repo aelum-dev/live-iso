@@ -181,7 +181,8 @@ if [[ ${#ALL_OFFICIAL_DEPS[@]} -gt 0 ]]; then
         
         if [[ -x "$DOWNLOAD_SCRIPT" ]]; then
             # download_packages.sh handles sudo and sync internally
-            bash "$DOWNLOAD_SCRIPT" "$OFFICIAL_DEPS_FILE" "$OFFICIAL_DL_DIR"
+            # CLEANUP_OUTDATED=false to preserve existing packages not in this subset
+            CLEANUP_OUTDATED=false bash "$DOWNLOAD_SCRIPT" "$OFFICIAL_DEPS_FILE" "$OFFICIAL_DL_DIR"
         else
             warn "01_download_packages.sh not found, trying pacman directly..."
             pacman -Sw --cachedir="$OFFICIAL_DL_DIR" --noconfirm "${NEED_DOWNLOAD[@]}" 2>&1 || true
