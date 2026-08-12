@@ -135,7 +135,6 @@ done < "$VERSION_FILE"
 if $CLEANUP_OUTDATED; then
     log "Checking for outdated packages in $DOWNLOAD_DIR..."
     removed_count=0
-    orphan_count=0
 
     for existing_pkg in "$DOWNLOAD_DIR"/*.pkg.tar.zst; do
         [[ -f "$existing_pkg" ]] || continue
@@ -143,12 +142,9 @@ if $CLEANUP_OUTDATED; then
         # Use pacman -Qp to reliably extract name and version from the package file
         read -r pkg_name pkg_ver < <(pacman -Qp "$existing_pkg" 2>/dev/null) || continue
         
-        # Check if this package is in our current resolved list
+        # Only check packages that are in our current resolved list
+        # Leave other packages alone (they may be from previous package lists)
         if [[ -z "${EXPECTED_VERSIONS[$pkg_name]+x}" ]]; then
-            # Not in current list - orphan from previous run, remove it
-            warn "Orphan: $(basename "$existing_pkg") (not in current package list)"
-            rm -f "$existing_pkg" "$existing_pkg.sig"
-            orphan_count=$((orphan_count + 1))
             continue
         fi
         
@@ -162,10 +158,8 @@ if $CLEANUP_OUTDATED; then
         fi
     done
 
-    if (( removed_count > 0 || orphan_count > 0 )); then
-        msg="Removed $removed_count outdated package(s)"
-        (( orphan_count > 0 )) && msg+=" + $orphan_count orphan(s)"
-        ok "$msg"
+    if (( removed_count > 0 )); then
+        ok "Removed $removed_count outdated package(s)"
     else
         ok "No outdated packages found"
     fi
