@@ -182,7 +182,12 @@ if [[ ${#ALL_OFFICIAL_DEPS[@]} -gt 0 ]]; then
         if [[ -x "$DOWNLOAD_SCRIPT" ]]; then
             # download_packages.sh handles sudo and sync internally
             # CLEANUP_OUTDATED=false to preserve existing packages not in this subset
-            CLEANUP_OUTDATED=false bash "$DOWNLOAD_SCRIPT" "$OFFICIAL_DEPS_FILE" "$OFFICIAL_DL_DIR"
+            # || true to prevent failure from aborting the whole script (AUR download still runs)
+            if CLEANUP_OUTDATED=false bash "$DOWNLOAD_SCRIPT" "$OFFICIAL_DEPS_FILE" "$OFFICIAL_DL_DIR" 2>&1; then
+                ok "Official dependencies downloaded"
+            else
+                warn "Official deps download failed (may need sudo), continuing with AUR download..."
+            fi
         else
             warn "01_download_packages.sh not found, trying pacman directly..."
             pacman -Sw --cachedir="$OFFICIAL_DL_DIR" --noconfirm "${NEED_DOWNLOAD[@]}" 2>&1 || true
