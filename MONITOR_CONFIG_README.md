@@ -82,6 +82,8 @@ The script uses a simple heuristic based on resolution height:
 | ≥ 1440 (1440p)    | 1.5          | Medium DPI displays |
 | < 1440 (1080p+)   | 1.0          | Standard DPI displays |
 
+**Note:** Actual resolution is preserved (no rounding). Scaling is calculated from the real resolution height. Ultrawide monitors (3440x1440, etc.) are supported correctly.
+
 ## Integration with Live ISO
 
 On the AestheticOS live ISO:
@@ -114,22 +116,18 @@ cat /home/aestheticos/.config/hypr/monitors.lua
 
 ## Customization
 
-To adjust scaling thresholds, edit the `calculate_scale()` function in the script:
+To adjust scaling thresholds, edit the `calculate_scale()` function in the script.
 
-```bash
-calculate_scale() {
-    local width=$1
-    local height=$2
-    
-    if [ "${height}" -ge 2160 ]; then
-        echo "2"
-    elif [ "${height}" -ge 1440 ]; then
-        echo "1.5"
-    else
-        echo "1"
-    fi
-}
-```
+## Robustness Features
+
+- **Atomic writes**: Config is written to a temp file first, then moved to final location
+- **Concurrent execution protection**: Uses `flock` to prevent multiple instances
+- **Input validation**: All resolutions are validated as numeric before use
+- **Empty modes handling**: Gracefully handles empty or missing modes files
+- **Proper file ownership**: Config is owned by `aestheticos:aestheticos` user
+- **HOME validation**: Script validates HOME is set and points to a valid directory
+- **Graceful fallback**: If no monitors detected, writes auto-detection config
+- **Error logging**: Warnings printed to stderr for skipped connectors
 
 ## Troubleshooting
 

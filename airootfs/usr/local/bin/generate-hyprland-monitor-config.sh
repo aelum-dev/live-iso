@@ -8,130 +8,153 @@
 # and their preferred resolutions, then generates a Lua config
 # compatible with Hyprland 0.55+ (Lua configuration format).
 #
+# Usage: Run as root before greetd/Hyprland starts.
+#        HOME must be set to /home/aestheticos.
+#
 
 set -euo pipefail
+
+# ─── Configuration ───────────────────────────────────────────────────────────
 
 # Output config directory
 HYPR_CONFIG_DIR="${HOME}/.config/hypr"
 MONITORS_LUA="${HYPR_CONFIG_DIR}/monitors.lua"
+TEMP_LUA="${MONITORS_LUA}.tmp.$$"
 
-# Create config directory if it doesn't exist
-mkdir -p "${HYPR_CONFIG_DIR}"
+# Owner for the generated config file
+CONFIG_OWNER="aestheticos"
+CONFIG_GROUP="aestheticos"
 
-# Function to calculate scale based on resolution
-# Rounds to nearest standard resolution before calculating scale
+# ─── Validation ──────────────────────────────────────────────────────────────
+
+if [[ -z "${HOME:-}" ]]; then
+    echo "✗ ERROR: HOME environment variable is not set." >&2
+    echo "  This script must run with HOME=/home/aestheticos" >&2
+    exit 1
+fi
+
+# Validate HOME points to a real user directory
+if [[ ! -d "${HOME}" ]]; then
+    echo "✗ ERROR: HOME directory '${HOME}' does not exist." >&2
+    exit 1
+fi
+
+# ─── Helper Functions ────────────────────────────────────────────────────────
+
+# Calculate scale factor based on resolution height
 calculate_scale() {
     local width=$1
     local height=$2
 
-    # Round to nearest standard resolution for scaling calculation
-    # This handles non-standard resolutions (like VM adaptations)
-    local rounded_height=${height}
-    
-    # Round to nearest standard height
-    if [ "${height}" -ge 2100 ]; then
-        rounded_height=2160  # 4K
-    elif [ "${height}" -ge 1350 ]; then
-        rounded_height=1440  # 2K
-    elif [ "${height}" -ge 1000 ]; then
-        rounded_height=1080  # 1080p
-    elif [ "${height}" -ge 700 ]; then
-        rounded_height=720   # 720p
+    # Validate inputs are numeric
+    if ! [[ "${width}" =~ ^[0-9]+$ ]] || ! [[ "${height}" =~ ^[0-9]+$ ]]; then
+        echo "1"
+        return
     fi
 
-    # Calculate scale based on rounded resolution height
-    if [ "${rounded_height}" -ge 2160 ]; then
+    # Scale based on resolution height
+    if [ "${height}" -ge 2160 ]; then
         echo "2"
-    elif [ "${rounded_height}" -ge 1440 ]; then
-        echo "1.25"
+    elif [ "${height}" -ge 1440 ]; then
+        echo "1.33"
     else
         echo "1"
     fi
 }
 
-# Function to get preferred resolution (first mode is usually preferred)
-# Rounds to nearest standard resolution for compatibility
+# Get the preferred resolution from a DRM modes file
+# Returns the first (preferred) mode as-is without rounding
 get_preferred_resolution() {
     local modes_file=$1
     local raw_mode
-    raw_mode=$(head -n 1 "${modes_file}")
-    
-    local width height
-    width=$(echo "${raw_mode}" | cut -d'x' -f1)
-    height=$(echo "${raw_mode}" | cut -d'x' -f2)
-    
-    # Round to nearest standard resolution
-    # This ensures scale factors divide cleanly
-    local std_width=${width}
-    local std_height=${height}
-    
-    # Round height to standard values
-    if [ "${height}" -ge 2100 ]; then
-        std_height=2160
-    elif [ "${height}" -ge 1350 ]; then
-        std_height=1440
-    elif [ "${height}" -ge 1000 ]; then
-        std_height=1080
-    elif [ "${height}" -ge 700 ]; then
-        std_height=720
+
+    # Ensure file is non-empty
+    if [[ ! -s "${modes_file}" ]]; then
+        echo ""
+        return 1
     fi
-    
-    # Round width proportionally (keep aspect ratio ~16:9)
-    case "${std_height}" in
-        2160) std_width=3840 ;;
-        1440) std_width=2560 ;;
-        1080) std_width=1920 ;;
-        720)  std_width=1280 ;;
-    esac
-    
-    echo "${std_width}x${std_height}"
+
+    raw_mode=$(head -n 1 "${modes_file}" | tr -d '[:space:]')
+
+    # Validate format: WIDTHxHEIGHT
+    if [[ ! "${raw_mode}" =~ ^[0-9]+x[0-9]+$ ]]; then
+        echo ""
+        return 1
+    fi
+
+    echo "${raw_mode}"
 }
 
-# Function to get monitor name from connector path
+# Get monitor output name from DRM connector path
+# Extracts the connector name (e.g., "HDMI-A-1", "eDP-1")
 get_monitor_name() {
     local connector_dir=$1
-    basename "${connector_dir}" | sed 's/^[^-]*-//'
+    # The directory name is like "card1-HDMI-A-1" or "card0-eDP-1"
+    # We want everything after the last dash
+    local dir_name
+    dir_name=$(basename "${connector_dir}")
+    echo "${dir_name#*-}"
 }
 
-# Generate monitors.lua configuration
+# ─── Config Generation ──────────────────────────────────────────────────────
+
 generate_config() {
     local position_x=0
-    local position_y=0
     local first=true
     local found=false
 
     # Scan all DRM connectors
     for connector in /sys/class/drm/card*-*/; do
-        # Skip non-connector directories (e.g., card1, renderD128)
+        # Skip if glob didn't match (no connectors)
         [[ -d "${connector}" ]] || continue
 
         local status_file="${connector}status"
         local modes_file="${connector}modes"
 
-        # Check if files exist
+        # Check if status file exists and is readable
         [[ -f "${status_file}" ]] || continue
-        [[ -f "${modes_file}" ]] || continue
 
         # Check if monitor is connected
         local status
         status=$(cat "${status_file}" 2>/dev/null) || continue
+        # Trim whitespace
+        status=$(echo "${status}" | tr -d '[:space:]')
         [[ "${status}" == "connected" ]] || continue
+
+        # Modes file may or may not exist (some drivers omit it)
+        if [[ ! -f "${modes_file}" ]]; then
+            echo "  [WARN] No modes file for ${connector}, skipping" >&2
+            continue
+        fi
 
         local monitor_name
         monitor_name=$(get_monitor_name "${connector}")
+
         local resolution
-        resolution=$(get_preferred_resolution "${modes_file}")
+        resolution=$(get_preferred_resolution "${modes_file}") || continue
+
+        # Skip if we couldn't parse a valid resolution
+        if [[ -z "${resolution}" ]]; then
+            echo "  [WARN] Could not parse resolution for ${monitor_name}, skipping" >&2
+            continue
+        fi
 
         # Parse resolution into width and height
         local width height
-        width=$(echo "${resolution}" | cut -d'x' -f1)
-        height=$(echo "${resolution}" | cut -d'x' -f2)
+        width="${resolution%%x*}"
+        height="${resolution##*x}"
+
+        # Validate parsed values
+        if ! [[ "${width}" =~ ^[0-9]+$ ]] || ! [[ "${height}" =~ ^[0-9]+$ ]]; then
+            echo "  [WARN] Invalid resolution '${resolution}' for ${monitor_name}, skipping" >&2
+            continue
+        fi
 
         local scale
         scale=$(calculate_scale "${width}" "${height}")
 
         # Calculate position (stack monitors horizontally)
-        local position="${position_x}x${position_y}"
+        local position="${position_x}x0"
 
         # Update position for next monitor
         position_x=$((position_x + width))
@@ -164,16 +187,57 @@ generate_config() {
     fi
 }
 
-# Write to file with header and generated config
+# ─── Main ────────────────────────────────────────────────────────────────────
+
+# Create config directory if it doesn't exist
+mkdir -p "${HYPR_CONFIG_DIR}"
+
+# Use flock to prevent concurrent execution (lock file in same directory)
+exec 200>"${MONITORS_LUA}.lock"
+if ! flock -n 200; then
+    echo "✗ ERROR: Another instance of this script is already running." >&2
+    exit 1
+fi
+
+echo "Generating Hyprland monitor configuration..."
+
+# Write to temp file first (atomic write)
 {
     echo "-- Auto-generated monitor configuration"
     echo "-- Generated by generate-hyprland-monitor-config.sh"
     echo "-- Generated on: $(date)"
     echo ""
     generate_config
-} > "${MONITORS_LUA}"
+} > "${TEMP_LUA}"
 
+# Move temp file to final location (atomic on same filesystem)
+mv "${TEMP_LUA}" "${MONITORS_LUA}"
+
+# Set correct ownership and permissions
+# This ensures the aestheticos user can read the config
+if id "${CONFIG_OWNER}" &>/dev/null; then
+    chown "${CONFIG_OWNER}:${CONFIG_GROUP}" "${MONITORS_LUA}" 2>/dev/null || true
+fi
+chmod 644 "${MONITORS_LUA}"
+
+# Print summary
 echo "✓ Monitor configuration generated: ${MONITORS_LUA}"
 echo ""
-echo "Detected monitors:"
-grep -E "^\s+(output|mode|scale)" "${MONITORS_LUA}" | sed 's/^/  /'
+
+# Count detected monitors
+monitor_count=$(grep -c 'output = "' "${MONITORS_LUA}" 2>/dev/null || echo "0")
+if [[ "${monitor_count}" -gt 0 ]]; then
+    echo "Detected ${monitor_count} monitor(s):"
+    grep -E '^\s+output = "' "${MONITORS_LUA}" | sed 's/^/  /'
+    echo ""
+    echo "Configuration:"
+    cat "${MONITORS_LUA}" | sed 's/^/  /'
+else
+    echo "⚠ No monitors detected. Fallback auto-detection config written."
+    echo ""
+    echo "Configuration:"
+    cat "${MONITORS_LUA}" | sed 's/^/  /'
+fi
+
+# Cleanup lock file (flock releases it on fd close)
+rm -f "${MONITORS_LUA}.lock"
