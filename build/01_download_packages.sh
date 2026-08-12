@@ -106,6 +106,69 @@ mapfile -t ALL_PKGS < "$RESOLVED_FILE"
 log "Resolved ${#ALL_PKGS[@]} packages (${#PACKAGES[@]} main + $(( ${#ALL_PKGS[@]} - ${#PACKAGES[@]} )) dependencies)"
 echo ""
 
+# --- Get expected versions from repo for all resolved packages ---
+log "Checking package versions against repository..."
+
+VERSION_FILE=$(mktemp)
+trap "rm -f '$RESOLVED_FILE' '$VERSION_FILE'" EXIT
+
+# Get name-version pairs from repo for all packages
+run_as_root pacman --dbpath="$TEMP_DB" -Sp --print-format "%n-%v" "${ALL_PKGS[@]}" 2>/dev/null > "$VERSION_FILE"
+
+# Build associative array: pkg_name -> expected_version
+# Uses pacman's own parsing to avoid regex issues with version strings
+declare -A EXPECTED_VERSIONS
+while IFS= read -r line; do
+    # Format: name-version (where version may contain dashes, e.g., 20260810-1 or 6.18.43-3)
+    # Split on the LAST dash that is followed by a digit (pkgrel boundary)
+    # Use pacman -Qi style: we know the format is name-version
+    # Extract version: everything after the first dash that starts a version-like pattern
+    if [[ "$line" =~ ^([a-zA-Z0-9._+-]+)-([0-9][^-]*-[0-9]+)$ ]]; then
+        pkg_name="${BASH_REMATCH[1]}"
+        expected_ver="${BASH_REMATCH[2]}"
+        EXPECTED_VERSIONS["$pkg_name"]="$expected_ver"
+    fi
+done < "$VERSION_FILE"
+
+# --- Clean up outdated packages in download directory ---
+log "Checking for outdated packages in $DOWNLOAD_DIR..."
+removed_count=0
+orphan_count=0
+
+for existing_pkg in "$DOWNLOAD_DIR"/*.pkg.tar.zst; do
+    [[ -f "$existing_pkg" ]] || continue
+    
+    # Use pacman -Qp to reliably extract name and version from the package file
+    read -r pkg_name pkg_ver < <(pacman -Qp "$existing_pkg" 2>/dev/null) || continue
+    
+    # Check if this package is in our current resolved list
+    if [[ -z "${EXPECTED_VERSIONS[$pkg_name]+x}" ]]; then
+        # Not in current list - orphan from previous run, remove it
+        warn "Orphan: $(basename "$existing_pkg") (not in current package list)"
+        rm -f "$existing_pkg" "$existing_pkg.sig"
+        orphan_count=$((orphan_count + 1))
+        continue
+    fi
+    
+    expected_ver="${EXPECTED_VERSIONS[$pkg_name]}"
+    
+    # Compare versions - if they differ, remove the outdated package
+    if [[ "$pkg_ver" != "$expected_ver" ]]; then
+        warn "Outdated: $(basename "$existing_pkg") (repo has $expected_ver)"
+        rm -f "$existing_pkg" "$existing_pkg.sig"
+        removed_count=$((removed_count + 1))
+    fi
+done
+
+if (( removed_count > 0 || orphan_count > 0 )); then
+    msg="Removed $removed_count outdated package(s)"
+    (( orphan_count > 0 )) && msg+=" + $orphan_count orphan(s)"
+    ok "$msg"
+else
+    ok "No outdated packages found"
+fi
+echo ""
+
 # --- Download all resolved packages ---
 mkdir -p "$DOWNLOAD_DIR"
 chmod 777 "$DOWNLOAD_DIR"
