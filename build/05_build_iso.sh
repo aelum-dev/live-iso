@@ -44,12 +44,6 @@ if [[ ! -f "$PROJECT_ROOT/profiledef.sh" ]]; then
     exit 1
 fi
 
-# --- Check pacman.conf ---
-if [[ ! -f "$PROJECT_ROOT/pacman.conf" ]]; then
-    echo "Error: pacman.conf not found"
-    exit 1
-fi
-
 # --- Clean work directory ---
 if [[ -d "$PROJECT_ROOT/work" ]]; then
     log "Removing old work directory..."
@@ -58,15 +52,15 @@ if [[ -d "$PROJECT_ROOT/work" ]]; then
     echo ""
 fi
 
-# --- Fix pacman.conf with absolute path ---
-# mkarchiso uses chroot, so file:// URLs must be absolute paths
+# --- Prepare offline pacman.conf ---
+# Use a dedicated offline config (no network mirrors) for ISO build
 OFFLINE_MIRROR_PATH="$PROJECT_ROOT/airootfs/var/cache/aestheticos/offline-mirror"
-PACMAN_CONF="$PROJECT_ROOT/pacman.conf"
+PACMAN_OFFLINE_CONF="$PROJECT_ROOT/pacman-offline.conf"
 
-if [[ -f "$PACMAN_CONF" ]]; then
-    # Replace relative path with absolute path
-    sed -i "s|Server = file:///airootfs|Server = file://$OFFLINE_MIRROR_PATH|" "$PACMAN_CONF"
-    log "Fixed pacman.conf: Server = file://$OFFLINE_MIRROR_PATH"
+if [[ -f "$PACMAN_OFFLINE_CONF" ]]; then
+    # Replace placeholder with actual path
+    sed -i "s|/OFFLINE_MIRROR_PATH|$OFFLINE_MIRROR_PATH|" "$PACMAN_OFFLINE_CONF"
+    log "Prepared offline pacman.conf: Server = file://$OFFLINE_MIRROR_PATH"
 fi
 
 log "Starting ISO build..."
@@ -76,7 +70,7 @@ echo ""
 cd "$PROJECT_ROOT"
 
 mkarchiso -v -w work -o output \
-    -C pacman.conf \
+    -C pacman-offline.conf \
     -m iso \
     .
 
