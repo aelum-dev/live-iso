@@ -20,5 +20,5 @@ file_permissions=(
   ["/home/aestheticos"]="1000:1000:755"
   ["/usr/local/bin/aestheticos-installer"]="0:0:755"
   ["/usr/local/bin/aestheticos-installer-cli"]="0:0:755"
-  ["/usr/local/bin/generate-hyprland-monitor-config.sh"]="0:0:755"
+  ["/usr/local/bin/auto-scale-monitor.sh"]="0:0:755"
 )

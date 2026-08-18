@@ -21,6 +21,7 @@ e2fsprogs
 btrfs-progs
 pv
 plymouth
+jq
 
 # System
 sudo
