@@ -14,6 +14,7 @@ AestheticOS is a beautiful, fully offline Arch Linux distro. The live ISO itself
 - **Zero-touch boot** — greetd launches barebones hyprland and then it starts the installer automatically on first boot
 - **Silent boot** — clean UEFI splash with the Plymouth BGRT theme (your OEM logo), no console spam
 - **Auto monitor scaling** — detects the connected monitor and applies the right Hyprland scale automatically, so the installer is crisp on any resolution (1080p / 1440p / 4K)
+- **Fast & lightweight install** — since every package is included, install takes ~1 minute and the full OS uses ~4.7 GB after install
 
 ## What you install
 
@@ -170,6 +171,8 @@ quiet splash loglevel=3 rd.udev.log_level=3 vt.global_cursor_default=0
 
 All packages are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via `file://` URL in the ISO's pacman.conf. **The installed system has zero network dependency** — every package needed for installation is embedded in the ISO itself.
 
+Because every package is included, **installation takes about 1 minute**, and the **complete OS requires roughly 4.7 GB of disk space** after install.
+
 ---
 
 ## Customization
@@ -216,6 +219,7 @@ sudo systemctl enable plymouth-wait-for-animation.service
 - `qemu` with KVM support
 - An AUR helper (`yay` or similar)
 - Root/sudo for package download and ISO build
+- ~5 GB of free disk space for the build and the ~4.7 GB installed OS
 
 ---
 
