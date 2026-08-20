@@ -1,19 +1,35 @@
 # AestheticOS
 
-A fully offline custom AestheticOS live ISO. **No internet required — ever.** Every package is cached locally in an embedded repository, so the ISO works completely air-gapped: boot it, install Arch Linux, and you never need a network connection during the install process.
+AestheticOS is a beautiful, fully offline Arch Linux distro. The live ISO itself is intentionally barebones — its only job is to boot and launch the [AestheticOS Installer](https://github.com/KornienkoDev/AestheticOS-Installer). But that installer installs a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more — ready to use the moment install finishes.
 
-Paired with a polished aesthetic: seamless silent boot with Plymouth BGRT theme, greetd login manager, and a clean UEFI experience.
+**No internet required — ever.** Every package is cached locally in an embedded repository, so the whole process is completely air-gapped: boot it on any machine, the installer starts on its own, and you never need a network connection — not during install, not after.
 
 ---
 
 ## Features
 
-- **📴 Fully offline** — every package embedded in the ISO, zero network dependency. Install on any machine without internet
-- **Silent boot** — no kernel messages, no console spam, just your OEM logo (BGRT) and a clean splash
-- **Plymouth BGRT theme** — preserves your UEFI firmware logo as the boot splash, flicker-free via SimpleDRM
-- **greetd + agreety + DankMaterialShell greeter** — fast login manager that launches the installer
-- **AUR support** — yay-bin and other AUR packages built into the ISO
-- **Systemd-boot (UEFI)** — clean EFI boot loader with deferred console takeover to retain the vendor logo
+- **📴 Fully offline** — every package is embedded in the ISO; zero network dependency, ever
+- **Zero-touch boot** — greetd barebones hyprland and then it launches the installer automatically on first boot
+- **Silent boot** — clean UEFI splash with the Plymouth BGRT theme (your OEM logo), no console spam
+- **Auto monitor scaling** — detects the connected monitor and applies the right Hyprland scale automatically, so the installer is crisp on any resolution (1080p / 1440p / 4K)
+
+## What you install
+
+The installer hands you a finished desktop, pre-configured and ready:
+
+- **Hyprland** dynamic tiling with DankMaterialShell (Quickshell-based) for a clean, modern look
+- **DMS greeter** (greetd) — fast, elegant login screen
+- **matugen** — generates matching color schemes from your wallpaper automatically
+- **Alacritty**, **Firefox**, **PipeWire** audio, and a silent **Plymouth BGRT** boot splash
+- **GTK + Qt apps are matugen-themed out of the box** — zero configuration required. In Qt apps, just pick the built-in matugen theme and it matches every color in the rest of the system
+- **zram** compressed swap — fast, and no disk space reserved for a swap file
+
+## Why AestheticOS
+
+- **Installs offline, runs anywhere.** No flaky mirror fetches or missing packages during install — everything is baked into the ISO. Works on a machine with no internet at all.
+- **Beautiful out of the box.** Not a bare Arch you theme yourself. You get a curated Hyprland + DMS setup with automatic theming, so it looks great on the first boot after install.
+- **Fast and quiet.** Silent boot with your OEM logo, auto monitor scaling, and zram instead of a slow swap file.
+- **Zero surprises.** A minimal, intentional live ISO that does exactly one thing — launch the installer — so there's nothing extra to configure or clean up.
 
 ---
 
@@ -81,6 +97,31 @@ sudo bash build/05_build_iso.sh
 ```
 
 The ISO is written to `output/`.
+
+---
+
+## Bundle the Installer
+
+The [AestheticOS Installer](https://github.com/KornienkoDev/AestheticOS-Installer) is baked into the ISO so it launches automatically on boot. To include it:
+
+1. Build the installer (see its [README](https://github.com/KornienkoDev/AestheticOS-Installer)):
+
+   ```bash
+   cd AestheticOS-Installer
+   ./build.sh
+   ```
+
+2. Copy both binaries into the ISO's airootfs:
+
+   ```bash
+   cp AestheticOS-Installer/build/bin/aestheticos-installer \
+      AestheticOS-Installer/build/bin/aestheticos-installer-cli \
+      airootfs/usr/local/bin/
+   ```
+
+3. Rebuild the ISO (step 5 of the build pipeline). The binaries are now packaged into `output/`.
+
+On boot, greetd starts Hyprland, which launches `/usr/local/bin/aestheticos-installer`. The `aestheticos` user is granted passwordless sudo via `airootfs/etc/sudoers.d/` so the GUI can run privileged steps through the CLI.
 
 ---
 
