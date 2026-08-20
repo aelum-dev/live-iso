@@ -1,8 +1,6 @@
 # AestheticOS
 
-
-https://github.com/user-attachments/assets/9cd1ac83-b6c7-48ca-bf1c-2c6e38c7615a
-
+<img width="2560" height="1440" alt="distro" src="https://github.com/user-attachments/assets/7474d635-7b14-4f14-b72b-2a3ae6cdca05" />
 
 AestheticOS is a beautiful, fully offline Arch Linux distro. The live ISO itself is intentionally barebones — its only job is to boot and launch the [AestheticOS Installer](https://github.com/KornienkoDev/AestheticOS-Installer). But that installer installs a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more — ready to use the moment install finishes.
 
