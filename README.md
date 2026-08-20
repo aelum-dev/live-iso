@@ -175,43 +175,6 @@ Because every package is included, **installation takes about 1 minute**, and th
 
 ---
 
-## Customization
-
-### Change the Plymouth theme
-
-```bash
-sudo plymouth-set-default-theme -R <theme>
-```
-
-Available themes: `bgrt`, `fade-in`, `glow`, `script`, `solar`, `spinner`, `spinfinity`, `text`, `tribar`, `details`
-
-### Add a fallback BGRT image
-
-If your UEFI doesn't provide a BGRT logo:
-
-```
-/usr/share/plymouth/themes/spinner/bgrt-fallback.png
-```
-
-Or set `UseFirmwareBackground=true` in `plymouthd.conf` to keep the firmware background.
-
-### Adjust animation delay
-
-For fast boots where the splash flickers, edit `airootfs/etc/plymouth/plymouthd.conf`:
-
-```ini
-[Daemon]
-ShowDelay=5
-```
-
-Or enable the animation wait service:
-
-```bash
-sudo systemctl enable plymouth-wait-for-animation.service
-```
-
----
-
 ## Requirements
 
 - `archiso` package (for `mkarchiso`)
@@ -219,7 +182,7 @@ sudo systemctl enable plymouth-wait-for-animation.service
 - `qemu` with KVM support
 - An AUR helper (`yay` or similar)
 - Root/sudo for package download and ISO build
-- ~5 GB of free disk space for the build and the ~4.7 GB installed OS
+- ~15 GB of free disk space for the build and the ~4.7 GB installed OS
 
 ---
 
