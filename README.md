@@ -1,5 +1,9 @@
 # AestheticOS
 
+
+https://github.com/user-attachments/assets/9cd1ac83-b6c7-48ca-bf1c-2c6e38c7615a
+
+
 AestheticOS is a beautiful, fully offline Arch Linux distro. The live ISO itself is intentionally barebones — its only job is to boot and launch the [AestheticOS Installer](https://github.com/KornienkoDev/AestheticOS-Installer). But that installer installs a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more — ready to use the moment install finishes.
 
 **No internet required — ever.** Every package is cached locally in an embedded repository, so the whole process is completely air-gapped: boot it on any machine, the installer starts on its own, and you never need a network connection — not during install, not after.
@@ -8,8 +12,8 @@ AestheticOS is a beautiful, fully offline Arch Linux distro. The live ISO itself
 
 ## Features
 
-- **📴 Fully offline** — every package is embedded in the ISO; zero network dependency, ever
-- **Zero-touch boot** — greetd barebones hyprland and then it launches the installer automatically on first boot
+- **Fully offline** — every package is embedded in the ISO; zero network dependency, ever
+- **Zero-touch boot** — greetd launches barebones hyprland and then it starts the installer automatically on first boot
 - **Silent boot** — clean UEFI splash with the Plymouth BGRT theme (your OEM logo), no console spam
 - **Auto monitor scaling** — detects the connected monitor and applies the right Hyprland scale automatically, so the installer is crisp on any resolution (1080p / 1440p / 4K)
 
