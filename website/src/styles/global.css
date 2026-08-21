@@ -1,0 +1,76 @@
+:root {
+  --star: 255;
+  --nebula: 255;
+  --cosmos: 255;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #0d1117;
+  color: var(--cosmos);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-height: 100vh;
+  place-content: center;
+}
+
+.container {
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+  width: min(90vw, 1080px);
+  padding: 4rem 0;
+}
+
+h1 {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+h2 {
+  font-size: 1.5rem;
+}
+
+p {
+  line-height: 1.5;
+}
+
+code {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #2a2f3a;
+  border-radius: 4px;
+}
+
+a {
+  color: #58a6ff;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.card {
+  border: 1px solid #2a2f3a;
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: border-color 0.2s;
+}
+
+.card:hover {
+  border-color: #58a6ff;
+  text-decoration: none;
+}
