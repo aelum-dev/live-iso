@@ -26,6 +26,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          working-directory: website
 
       - run: npm ci
         working-directory: website
