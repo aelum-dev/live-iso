@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "website/**"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 permissions:
@@ -25,8 +26,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          working-directory: website
 
       - run: npm ci
         working-directory: website
