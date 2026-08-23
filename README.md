@@ -2,37 +2,37 @@
 
 <img width="2560" height="1440" alt="hero-light" src="https://github.com/user-attachments/assets/fcde5aa1-079c-4400-980d-fa44bf509539" />
 
-AestheticOS is a beautiful, fully offline Arch Linux distro. The live ISO itself is intentionally barebones — its only job is to boot and launch the [AestheticOS Installer](https://github.com/KornienkoDev/AestheticOS-Installer). But that installer installs a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more — ready to use the moment install finishes.
+AestheticOS is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [AestheticOS Installer](https://github.com/KornienkoDev/AestheticOS-Installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more.
 
-**No internet required — ever.** Every package is cached locally in an embedded repository, so the whole process is completely air-gapped: boot it on any machine, the installer starts on its own, and you never need a network connection — not during install, not after.
+The install itself needs no internet. Every package is cached locally in an embedded repository, so it's completely air-gapped: boot it on any machine, the installer starts on its own, and you don't need a network connection to install it. Once installed, it's a normal Arch system — use the internet, update packages, install whatever you like.
 
 ---
 
 ## Features
 
-- **Fully offline** — every package is embedded in the ISO; zero network dependency, ever
-- **Zero-touch boot** — greetd launches barebones hyprland and then it starts the installer automatically on first boot
+- **Offline install** — every package needed to install is embedded in the ISO, so the install doesn't touch the network. (Once installed, your system works like any Arch install and uses the internet normally.)
+- **Auto-launching installer** — on first boot, greetd starts a barebones Hyprland that opens the installer by itself
 - **Silent boot** — clean UEFI splash with the Plymouth BGRT theme (your OEM logo), no console spam
-- **Auto monitor scaling** — detects the connected monitor and applies the right Hyprland scale automatically, so the installer is crisp on any resolution (1080p / 1440p / 4K)
-- **Fast & lightweight install** — since every package is included, install takes ~1 minute and the full OS uses ~4.7 GB after install
+- **Auto monitor scaling** — detects the connected monitor and applies the right Hyprland scale automatically, so the installer reads crisply at 1080p, 1440p, or 4K
+- **Quick install** — since every package is included, install takes about a minute and the finished OS uses roughly 4.7 GB
 
 ## What you install
 
 The installer hands you a finished desktop, pre-configured and ready:
 
 - **Hyprland** dynamic tiling with DankMaterialShell (Quickshell-based) for a clean, modern look
-- **DMS greeter** (greetd) — fast, elegant login screen
+- **DMS greeter** (greetd) — a fast login screen
 - **matugen** — generates matching color schemes from your wallpaper automatically
 - **Alacritty**, **Firefox**, **PipeWire** audio, and a silent **Plymouth BGRT** boot splash
-- **GTK + Qt apps are matugen-themed out of the box** — zero configuration required. In Qt apps, just pick the built-in matugen theme and it matches every color in the rest of the system
+- **GTK + Qt apps get matugen-themed automatically**. In Qt apps, just pick the built-in matugen theme and it matches the rest of the system
 - **zram** compressed swap — fast, and no disk space reserved for a swap file
 
 ## Why AestheticOS
 
-- **Installs offline, runs anywhere.** No flaky mirror fetches or missing packages during install — everything is baked into the ISO. Works on a machine with no internet at all.
-- **Beautiful out of the box.** Not a bare Arch you theme yourself. You get a curated Hyprland + DMS setup with automatic theming, so it looks great on the first boot after install.
-- **Fast and quiet.** Silent boot with your OEM logo, auto monitor scaling, and zram instead of a slow swap file.
-- **Zero surprises.** A minimal, intentional live ISO that does exactly one thing — launch the installer — so there's nothing extra to configure or clean up.
+- **Installs without a network.** No chasing slow or missing mirrors during install — everything is baked into the ISO. Handy on a machine that has no internet at install time. (After install you can connect normally.)
+- **A finished desktop, not a blank slate.** You get a curated Hyprland + DMS setup with automatic theming, so it looks reasonable straight after install.
+- **Quiet boot.** Silent boot with your OEM logo, auto monitor scaling, and zram instead of a swap file.
+- **Nothing extra.** The live ISO exists to launch the installer, so there's little to configure or clean up.
 
 ---
 
@@ -167,9 +167,9 @@ quiet splash loglevel=3 rd.udev.log_level=3 vt.global_cursor_default=0
 - Hook: `plymouth` added to mkinitcpio HOOKS in `airootfs/etc/mkinitcpio.conf.d/archiso.conf`
 - The pacman hook at `airootfs/etc/pacman.d/hooks/90-plymouth-theme.hook` auto-runs `plymouth-set-default-theme -R bgrt` after plymouth install
 
-### Fully Offline (No Internet Required)
+### Offline Install (No Internet During Install)
 
-All packages are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via `file://` URL in the ISO's pacman.conf. **The installed system has zero network dependency** — every package needed for installation is embedded in the ISO itself.
+All packages needed for the install are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via a `file://` URL in the ISO's pacman.conf, so the install doesn't reach the network. This applies to installation only — the installed system is a regular Arch install and uses the internet for updates and anything else you add.
 
 Because every package is included, **installation takes about 1 minute**, and the **complete OS requires roughly 4.7 GB of disk space** after install.
 
