@@ -98,7 +98,6 @@ fi
 log "Downloading AUR PKGBUILDs to $BUILD_DIR..."
 mkdir -p "$BUILD_DIR"
 
-aur_new=0
 for pkg in "${!ALL_AUR_PKGS[@]}"; do
     pkgbase="${AUR_PACKAGE_BASES[$pkg]:-$pkg}"
     pkg_dir="$BUILD_DIR/$pkg"
@@ -109,7 +108,6 @@ for pkg in "${!ALL_AUR_PKGS[@]}"; do
         tar xzf "/tmp/${pkgbase}.tar.gz" -C "$pkg_dir" --strip-components=1 2>/dev/null || true
         rm -f "/tmp/${pkgbase}.tar.gz"
         ok "Downloaded: $pkg"
-        ((aur_new++)) || true
     else
         warn "Failed: $pkg"
     fi

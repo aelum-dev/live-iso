@@ -13,7 +13,6 @@ SYS_LOCK="/var/lib/pacman/db.lck"
 
 log() { echo "==> $*"; }
 ok()  { echo "  ✓ $*"; }
-warn() { echo "  ⚠ $*"; }
 
 # Sync system databases
 log "Syncing system package databases..."

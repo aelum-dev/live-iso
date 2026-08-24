@@ -12,7 +12,6 @@ DOWNLOAD_DIR="${PROJECT_ROOT}/downloads/aur_packages"
 
 log() { echo "==> $*"; }
 ok()  { echo "  ✓ $*"; }
-warn() { echo "  ⚠ $*"; }
 err() { echo "  ✗ $*"; }
 
 # Check for PKGBUILDs
@@ -29,6 +28,13 @@ if [[ $pkg_count -eq 0 ]]; then
 fi
 
 log "Found $pkg_count packages to build"
+
+# Clear makepkg source cache so sources are freshly downloaded each time
+SRC_CACHE="${HOME}/.cache/makepkg"
+if [[ -d "$SRC_CACHE" ]]; then
+    rm -rf "$SRC_CACHE"
+    log "Cleared makepkg source cache"
+fi
 
 # Build packages
 log "Building packages..."
