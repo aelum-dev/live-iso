@@ -80,6 +80,23 @@ if [[ $aur_count -gt 0 ]]; then
     ok "Copied $aur_count AUR packages"
 fi
 
+# --- Remove any stray .sig files from source dirs (safety net) ---
+log "Ensuring no .sig files in source directories..."
+for src_dir in "$OFFICIAL_DIR" "$AUR_DIR"; do
+    sig_count=$(find "$src_dir" -maxdepth 1 -name '*.sig' -print0 2>/dev/null | tr -cd '\0' | wc -c)
+    if [[ $sig_count -gt 0 ]]; then
+        find "$src_dir" -maxdepth 1 -name '*.sig' -delete
+        ok "Removed $sig_count .sig file(s) from $(basename "$src_dir")"
+    fi
+done
+
+# --- Remove any stray .sig files from repo dir (safety net) ---
+sig_count=$(find "$REPO_DIR" -maxdepth 1 -name '*.sig' -print0 2>/dev/null | tr -cd '\0' | wc -c)
+if [[ $sig_count -gt 0 ]]; then
+    find "$REPO_DIR" -maxdepth 1 -name '*.sig' -delete
+    ok "Removed $sig_count .sig file(s) from repository"
+fi
+
 # --- Create repository database ---
 log "Creating repository database..."
 
@@ -93,10 +110,20 @@ fi
 
 # Create aestheticos-offline.db.tar.zst using repo-add
 # repo-add automatically creates .db.tar.zst, .files.tar.zst and symlinks .db, .files
-repo-add "$REPO_DIR/aestheticos-offline.db.tar.zst" "$REPO_DIR"/*.pkg.tar.* 2>&1 | tail -5
+repo-add "$REPO_DIR/aestheticos-offline.db.tar.zst" "$REPO_DIR"/*.pkg.tar.zst 2>&1 | tail -5
 
 ok "Repository database created"
 echo ""
+
+# --- Remove any .sig files that repo-add may have generated ---
+log "Removing any .sig files from repository..."
+sig_count=$(find "$REPO_DIR" -maxdepth 1 -name '*.sig' -print0 2>/dev/null | tr -cd '\0' | wc -c)
+if [[ $sig_count -gt 0 ]]; then
+    find "$REPO_DIR" -maxdepth 1 -name '*.sig' -delete
+    ok "Removed $sig_count .sig file(s) from repository"
+else
+    ok "No .sig files in repository"
+fi
 
 # --- Report ---
 echo "================================="

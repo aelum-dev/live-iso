@@ -88,7 +88,8 @@ echo ""
 log "Resolving full dependency tree (delegating to pacman)..."
 
 RESOLVED_FILE=$(mktemp)
-trap "rm -f '$RESOLVED_FILE'" EXIT
+VERSION_FILE=""
+trap 'rm -f "$RESOLVED_FILE" ${VERSION_FILE:+$VERSION_FILE}' EXIT
 
 for pkg in "${PACKAGES[@]}"; do
     # Use pacman -Sp to simulate sync and print package names
@@ -166,17 +167,27 @@ if $CLEANUP_OUTDATED; then
     echo ""
 fi
 
-# --- Download all resolved packages ---
+# --- Download all resolved packages (skip .sig files) ---
 mkdir -p "$DOWNLOAD_DIR"
 chmod 777 "$DOWNLOAD_DIR"
 
 log "Downloading ${#ALL_PKGS[@]} packages to $DOWNLOAD_DIR..."
-run_as_root pacman --cachedir="$DOWNLOAD_DIR" --dbpath="$TEMP_DB" -Sw --noconfirm --disable-sandbox "${ALL_PKGS[@]}"
+run_as_root pacman --cachedir="$DOWNLOAD_DIR" --dbpath="$TEMP_DB" -Sw --noconfirm --disable-sandbox --noprogressbar "${ALL_PKGS[@]}"
 ok "Download complete"
 echo ""
 
 # --- Cleanup temp database ---
 rm -rf "$TEMP_DB"
+
+# --- Remove any .sig files that may have been downloaded ---
+log "Removing .sig files from $DOWNLOAD_DIR..."
+sig_count=$(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.sig' -print0 2>/dev/null | tr -cd '\0' | wc -c)
+if [[ $sig_count -gt 0 ]]; then
+    find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.sig' -delete
+    ok "Removed $sig_count .sig file(s)"
+else
+    ok "No .sig files found"
+fi
 
 # --- Final report ---
 remaining=0
