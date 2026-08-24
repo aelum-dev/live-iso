@@ -172,7 +172,7 @@ mkdir -p "$DOWNLOAD_DIR"
 chmod 777 "$DOWNLOAD_DIR"
 
 log "Downloading ${#ALL_PKGS[@]} packages to $DOWNLOAD_DIR..."
-run_as_root pacman --cachedir="$DOWNLOAD_DIR" --dbpath="$TEMP_DB" -Sw --noconfirm --disable-sandbox --noprogressbar "${ALL_PKGS[@]}"
+run_as_root pacman --cachedir="$DOWNLOAD_DIR" --dbpath="$TEMP_DB" -Sw --noconfirm --disable-sandbox "${ALL_PKGS[@]}"
 ok "Download complete"
 echo ""
 

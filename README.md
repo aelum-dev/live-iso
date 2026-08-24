@@ -61,7 +61,11 @@ The installer hands you a finished desktop, pre-configured and ready:
 ├── efiboot/               # systemd-boot EFI boot entries
 │   └── loader/entries/
 │       └── 01-aestheticos-linux.conf
-├── build/                 # Build pipeline scripts
+├── docker/                # Docker Compose build pipeline
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── build-scripts/     # Pipeline step scripts
+├── build/                 # Native build pipeline scripts (fallback)
 │   ├── 01_download_packages.sh   # Download official packages
 │   ├── 02_download_aur.sh        # Resolve + download AUR PKGBUILDs
 │   ├── 03_build_aur.sh           # Compile AUR packages
@@ -79,6 +83,41 @@ The installer hands you a finished desktop, pre-configured and ready:
 ---
 
 ## Build Pipeline
+
+### Docker Compose (Recommended)
+
+Build the ISO inside a container — clean, reproducible, no host pollution:
+
+```bash
+# Build the Docker image (one-time)
+docker compose -f docker/docker-compose.yml build
+
+# Run the full pipeline (all 5 steps)
+docker compose -f docker/docker-compose.yml run --rm builder
+
+# Or run individual steps (idempotent, artifacts persist)
+docker compose -f docker/docker-compose.yml run --rm builder 1   # Download official packages
+docker compose -f docker/docker-compose.yml run --rm builder 2   # Download AUR packages
+docker compose -f docker/docker-compose.yml run --rm builder 3   # Build AUR packages
+docker compose -f docker/docker-compose.yml run --rm builder 4   # Create offline repository
+docker compose -f docker/docker-compose.yml run --rm builder 5   # Build ISO
+```
+
+The ISO is written to `output/`.
+
+### Makefile
+
+```bash
+make build          # Build Docker image
+make run            # Full pipeline
+make run-1          # Step 1 only
+make run-2          # Step 2 only
+make run-3          # Step 3 only
+make run-4          # Step 4 only
+make run-5          # Step 5 only
+```
+
+### Native (without Docker)
 
 Run the build scripts in order (as root where needed):
 
@@ -98,8 +137,6 @@ sudo bash build/04_create_repository.sh
 # 5. Build the ISO (runs mkarchiso with pacstrap)
 sudo bash build/05_build_iso.sh
 ```
-
-The ISO is written to `output/`.
 
 ---
 
@@ -176,6 +213,13 @@ Because every package is included, **installation takes about 1 minute**, and th
 ---
 
 ## Requirements
+
+### Docker (Recommended)
+
+- Docker + Docker Compose
+- ~15 GB of free disk space for the build and the ~4.7 GB installed OS
+
+### Native Build
 
 - `archiso` package (for `mkarchiso`)
 - `edk2-ovmf` (for QEMU testing)

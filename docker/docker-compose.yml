@@ -1,0 +1,26 @@
+# AestheticOS Docker Compose Build Pipeline
+#
+# Usage:
+#   docker compose build          # Build the image
+#   docker compose run builder    # Run full pipeline (all 5 steps)
+#   docker compose run builder 1  # Step 1 only
+#   docker compose run builder 2  # Step 2 only
+#   docker compose run builder 3  # Step 3 only
+#   docker compose run builder 4  # Step 4 only
+#   docker compose run builder 5  # Step 5 only
+#
+# Steps are idempotent — artifacts persist in volumes.
+# Run individual steps to resume after a failure.
+
+services:
+  builder:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: aestheticos-builder
+    privileged: true          # Required for mkarchiso / pacman
+    volumes:
+      - ../:/project:rw       # Project root (packages, downloads, output)
+    working_dir: /project
+    stdin_open: true
+    tty: true
