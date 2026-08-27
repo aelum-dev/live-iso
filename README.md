@@ -38,90 +38,44 @@ The installer hands you a finished desktop, pre-configured and ready:
 
 ## Project Structure
 
+This repo is the **AestheticOS profile** — the content that goes into the ISO. The build pipeline that turns it into an ISO now lives in a separate repo: [aestheticos/docker](https://gitlab.com/aestheticos/docker). See [Building & Running](#building--running) below.
+
 ```
 .
 ├── profiledef.sh          # ISO metadata (name, label, publisher, install dir)
 ├── packages.x86_64        # Official packages to include
 ├── packages.aur.x86_64    # AUR packages to build
-├── pacman.conf            # Pacman config for the build environment
-├── run.sh                 # QEMU launch script for testing
-├── OVMF_VARS.fd           # UEFI variables for QEMU
+├── bootstrap_packages     # Packages for the base install environment
+├── pacman-offline.conf    # Pacman config used by mkarchiso (offline mirror only)
 ├── airootfs/              # Root filesystem for the ISO
 │   ├── etc/
 │   │   ├── greetd/            # greetd + DMS greeter config (launches installer)
 │   │   ├── mkinitcpio.conf.d/ # Live ISO mkinitcpio hooks
 │   │   ├── mkinitcpio.d/      # Kernel preset
-│   │   ├── pacman.d/hooks/    # Pacman hooks (e.g. plymouth theme setup)
+│   │   ├── pacman.conf        # Installed system pacman config (offline mirror)
 │   │   ├── plymouth/          # Plymouth daemon config
 │   │   ├── skel/              # Default user home (dotfiles)
 │   │   ├── skel/.hushlogin    # Suppress "Last login" message
 │   │   ├── systemd/system/    # Systemd units (animation delay, etc.)
 │   │   └── sudoers.d/         # Sudo config for aestheticos user
-│   └── usr/share/plymouth/themes/  # Plymouth themes
+│   └── usr/share/DankMaterialShell/  # DMS desktop files
 ├── efiboot/               # systemd-boot EFI boot entries
 │   └── loader/entries/
 │       └── 01-aestheticos-linux.conf
-├── docker/                # Docker Compose build pipeline
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   └── build-scripts/     # Pipeline step scripts
-├── build/                 # Native build pipeline scripts (fallback)
-│   ├── 01_download_packages.sh   # Download official packages
-│   ├── 02_download_aur.sh        # Resolve + download AUR PKGBUILDs
-│   ├── 03_build_aur.sh           # Compile AUR packages
-│   ├── 04_create_repository.sh   # Create offline mirror
-│   └── 05_build_iso.sh           # Run mkarchiso to build the ISO
-├── downloads/
-│   ├── official_packages/     # Downloaded .pkg.tar.zst files
-│   ├── aur_packages/          # Built AUR .pkg.tar.zst files
-│   └── aur_build/             # AUR PKGBUILD source dirs
-├── output/                  # Built ISO files
-├── work/                    # mkarchiso working directory (cleaned each build)
-└── vdisk.qcow2              # QEMU virtual disk for testing
+├── grub/                  # GRUB (BIOS/UEFI) boot config
+├── syslinux/              # Syslinux (BIOS) boot config
+└── images/                # Website / README images
 ```
 
 ---
 
-## Test with QEMU
+## Building & Running
 
-```bash
-bash run.sh
-```
-
-Launches the latest ISO in QEMU with:
-- KVM acceleration
-- 4 cores, 4GB RAM
-- VirtIO GPU with GL (virgl)
-- OVMF UEFI firmware
-- Shared directory mount
-- User-mode networking (SSH forwarded to port 2222)
+All building (ISO creation) and running (QEMU testing) of AestheticOS are done in the [aestheticos/docker](https://gitlab.com/aestheticos/docker) repo — not here. This repo only holds the profile content that goes into the ISO. See the [docker repo README](https://gitlab.com/aestheticos/docker) for build and run instructions.
 
 ---
 
-## Key Configuration
-
-### Silent Boot
-
-Kernel parameters in `efiboot/loader/entries/01-aestheticos-linux.conf`:
-
-```
-quiet splash loglevel=3 rd.udev.log_level=3 vt.global_cursor_default=0
-```
-
-- `quiet` — suppress kernel messages
-- `splash` — show Plymouth (required alongside `quiet`)
-- `loglevel=3` — reduce console verbosity
-- `rd.udev.log_level=3` — silence initramfs udev messages
-- `vt.global_cursor_default=0` — hide cursor blinking
-
-### Plymouth BGRT Theme
-
-- Theme: `bgrt` (built-in, reads UEFI firmware logo at runtime)
-- Config: `airootfs/etc/plymouth/plymouthd.conf`
-- Hook: `plymouth` added to mkinitcpio HOOKS in `airootfs/etc/mkinitcpio.conf.d/archiso.conf`
-- The pacman hook at `airootfs/etc/pacman.d/hooks/90-plymouth-theme.hook` auto-runs `plymouth-set-default-theme -R bgrt` after plymouth install
-
-### Offline Install (No Internet During Install)
+## Offline Install (No Internet During Install)
 
 All packages needed for the install are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via a `file://` URL in the ISO's pacman.conf, so the install doesn't reach the network. This applies to installation only — the installed system is a regular Arch install and uses the internet for updates and anything else you add.
 
@@ -129,24 +83,6 @@ Because every package is included, **installation takes about 1 minute**, and th
 
 ---
 
-## Requirements
-
-### Docker (Recommended)
-
-- Docker + Docker Compose
-- ~15 GB of free disk space for the build and the ~4.7 GB installed OS
-
-### Native Build
-
-- `archiso` package (for `mkarchiso`)
-- `edk2-ovmf` (for QEMU testing)
-- `qemu` with KVM support
-- An AUR helper (`yay` or similar)
-- Root/sudo for package download and ISO build
-- ~15 GB of free disk space for the build and the ~4.7 GB installed OS
-
----
-
 ## License
 
-See individual package licenses. This ISO project itself is released under the same license as the Arch Linux packages it bundles.
+Released under the [GNU General Public License v3.0 (GPL-3.0)](https://www.gnu.org/licenses/gpl-3.0.html). See the `LICENSE` file for the full text.
