@@ -7,4 +7,4 @@ user = "greeter"
 
 [initial_session]
 command = "start-hyprland > /dev/null 2>&1"
-user = "aestheticos"
+user = "aelum"

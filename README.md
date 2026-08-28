@@ -1,8 +1,8 @@
-# AestheticOS
+# Aelum
 
-![AestheticOS](images/hero-light.png)
+![Aelum](images/hero-light.png)
 
-AestheticOS is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [AestheticOS Installer](https://gitlab.com/aestheticos/installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more.
+Aelum is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [Aelum Installer](https://gitlab.com/aelum/installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more.
 
 The install itself needs no internet. Every package is cached locally in an embedded repository, so it's completely air-gapped: boot it on any machine, the installer starts on its own, and you don't need a network connection to install it. Once installed, it's a normal Arch system — use the internet, update packages, install whatever you like.
 
@@ -27,7 +27,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 - **GTK + Qt apps get matugen-themed automatically**. In Qt apps, just pick the built-in matugen theme and it matches the rest of the system
 - **zram** compressed swap — fast, and no disk space reserved for a swap file
 
-## Why AestheticOS
+## Why Aelum
 
 - **Installs without a network.** No chasing slow or missing mirrors during install — everything is baked into the ISO. Handy on a machine that has no internet at install time. (After install you can connect normally.)
 - **A finished desktop, not a blank slate.** You get a curated Hyprland + DMS setup with automatic theming, so it looks reasonable straight after install.
@@ -38,7 +38,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 
 ## Project Structure
 
-This repo is the **AestheticOS profile** — the content that goes into the ISO. The build pipeline that turns it into an ISO now lives in a separate repo: [aestheticos/docker](https://gitlab.com/aestheticos/docker). See [Building & Running](#building--running) below.
+This repo is the **Aelum profile** — the content that goes into the ISO. The build pipeline that turns it into an ISO now lives in a separate repo: [aelum/docker](https://gitlab.com/aelum/docker). See [Building & Running](#building--running) below.
 
 ```
 .
@@ -57,11 +57,11 @@ This repo is the **AestheticOS profile** — the content that goes into the ISO.
 │   │   ├── skel/              # Default user home (dotfiles)
 │   │   ├── skel/.hushlogin    # Suppress "Last login" message
 │   │   ├── systemd/system/    # Systemd units (animation delay, etc.)
-│   │   └── sudoers.d/         # Sudo config for aestheticos user
+│   │   └── sudoers.d/         # Sudo config for aelum user
 │   └── usr/share/DankMaterialShell/  # DMS desktop files
 ├── efiboot/               # systemd-boot EFI boot entries
 │   └── loader/entries/
-│       └── 01-aestheticos-linux.conf
+│       └── 01-aelum-linux.conf
 ├── grub/                  # GRUB (BIOS/UEFI) boot config
 ├── syslinux/              # Syslinux (BIOS) boot config
 └── images/                # Website / README images
@@ -71,13 +71,13 @@ This repo is the **AestheticOS profile** — the content that goes into the ISO.
 
 ## Building & Running
 
-All building (ISO creation) and running (QEMU testing) of AestheticOS are done in the [aestheticos/docker](https://gitlab.com/aestheticos/docker) repo — not here. This repo only holds the profile content that goes into the ISO. See the [docker repo README](https://gitlab.com/aestheticos/docker) for build and run instructions.
+All building (ISO creation) and running (QEMU testing) of Aelum are done in the [aelum/docker](https://gitlab.com/aelum/docker) repo — not here. This repo only holds the profile content that goes into the ISO. See the [docker repo README](https://gitlab.com/aelum/docker) for build and run instructions.
 
 ---
 
 ## Offline Install (No Internet During Install)
 
-All packages needed for the install are cached in `airootfs/var/cache/aestheticos/offline-mirror/` and served via a `file://` URL in the ISO's pacman.conf, so the install doesn't reach the network. This applies to installation only — the installed system is a regular Arch install and uses the internet for updates and anything else you add.
+All packages needed for the install are cached in `airootfs/var/cache/aelum/offline-mirror/` and served via a `file://` URL in the ISO's pacman.conf, so the install doesn't reach the network. This applies to installation only — the installed system is a regular Arch install and uses the internet for updates and anything else you add.
 
 Because every package is included, **installation takes about 1 minute**, and the **complete OS requires roughly 4.7 GB of disk space** after install.
 

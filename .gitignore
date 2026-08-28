@@ -3,7 +3,7 @@ work/
 output/
 downloads/
 build/aur_build
-airootfs/var/cache/aestheticos/offline-mirror
+airootfs/var/cache/aelum/offline-mirror
 
 __pycache__
 build.log
@@ -12,5 +12,5 @@ build.log
 out
 OVMF_VARS.fd
 vdisk.qcow2
-airootfs/usr/local/bin/aestheticos-installer
-airootfs/usr/local/bin/aestheticos-installer-cli
+airootfs/usr/local/bin/aelum-installer
+airootfs/usr/local/bin/aelum-installer-cli

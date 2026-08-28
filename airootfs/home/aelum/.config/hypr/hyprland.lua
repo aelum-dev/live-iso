@@ -14,7 +14,7 @@ local terminal    = "alacritty"
 
 hl.on("hyprland.start", function ()
      hl.exec_cmd("hyprpaper")
-     hl.exec_cmd("/usr/local/bin/aestheticos-installer")
+     hl.exec_cmd("/usr/local/bin/aelum-installer")
 end)
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----
@@ -117,7 +117,7 @@ hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 
 hl.window_rule({
     name  = "installer",
-    match = { class = "aestheticos-installer" },
+    match = { class = "aelum-installer" },
     float = true,
 })
 
