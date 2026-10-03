@@ -1,6 +1,10 @@
-[Hook]
+[Trigger]
+Type = Package
 Operation = Install
-Type = Operation
-Trigger = type = operation operation = installed
+Operation = Upgrade
+Target = *
 
-Script = bash /usr/local/share/aelum/boot/swap-logo.sh
+[Action]
+Description = Install Aelum branded plymouth boot logo
+When = PostTransaction
+Exec = /bin/sh /usr/local/share/aelum/boot/swap-logo.sh
