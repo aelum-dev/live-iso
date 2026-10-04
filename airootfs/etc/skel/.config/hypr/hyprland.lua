@@ -86,9 +86,9 @@ hl.window_rule({
 	match = { class = "^(firefox)$", title = "^(Picture-in-Picture)$" },
 	float = true,
 	size = "480 270",
-	pin = true
+	pin = true,
+	opaque = true
 })
-hl.window_rule({ match = { class = "^firefox$", title = "^Picture-in-Picture$" }, opaque = true })
 hl.window_rule({ match = { class = "^(zoom)$" }, float = true })
 hl.layer_rule({ match = { namespace = "^(quickshell)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^dms:.*" }, no_anim = true })
