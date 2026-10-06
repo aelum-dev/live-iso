@@ -23,7 +23,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 - **Hyprland** dynamic tiling with DankMaterialShell (Quickshell-based) for a clean, modern look
 - **DMS greeter** (greetd) — a fast login screen
 - **matugen** — generates matching color schemes from your wallpaper automatically
-- **Alacritty**, **Firefox**, **PipeWire** audio, and a silent **Plymouth BGRT** boot splash
+- **Kitty**, **Firefox** (with **uBlock Origin** pre-installed), **PipeWire** audio, and a silent **Plymouth BGRT** boot splash
 - **GTK + Qt apps get matugen-themed automatically**. In Qt apps, just pick the built-in matugen theme and it matches the rest of the system
 - **zram** compressed swap — fast, and no disk space reserved for a swap file
 
@@ -71,7 +71,9 @@ This repo is the **Aelum profile** — the content that goes into the ISO. The b
 
 ## Building & Running
 
-All building (ISO creation) and running (QEMU testing) of Aelum are done in the [aelum/docker](https://gitlab.com/aelum/docker) repo — not here. This repo only holds the profile content that goes into the ISO. See the [docker repo README](https://gitlab.com/aelum/docker) for build and run instructions.
+All building (ISO creation) and running (QEMU testing) of Aelum are done in the [aelum/docker](https://gitlab.com/aelum/docker) repo — not here. Firefox ships with **uBlock Origin** automatically installed on first boot (when online). This is done with a Mozilla distribution policy in `airootfs/usr/lib/firefox/distribution/policies.json`, which force-installs the add-on from [addons.mozilla.org](https://addons.mozilla.org) using its add-on ID (`uBlock0@raymondhill.net`). No add-on file is bundled in the ISO — Firefox downloads it on first launch. See Mozilla's [Deploy Firefox with extensions](https://support.mozilla.org/en-US/kb/deploying-firefox-with-extensions) docs for how this works.
+
+This repo only holds the profile content that goes into the ISO. See the [docker repo README](https://gitlab.com/aelum/docker) for build and run instructions.
 
 ---
 
