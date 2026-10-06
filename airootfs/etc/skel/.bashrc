@@ -9,5 +9,3 @@ PS1='[\u@\h \W]\$ '
 
 alias app-install="sudo pacman -Syu"
 alias app-remove="sudo pacman -Rsn"
-
-fastfetch
