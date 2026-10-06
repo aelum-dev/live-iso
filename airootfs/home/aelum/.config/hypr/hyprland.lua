@@ -3,7 +3,7 @@
 -------------------
 
 -- Set programs that you use
-local terminal    = "alacritty"
+local terminal    = "kitty"
 
 -------------------
 ---- AUTOSTART ----
