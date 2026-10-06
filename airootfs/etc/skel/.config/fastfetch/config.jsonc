@@ -3,23 +3,10 @@
     "logo": {
         "type": "kitty-direct",
         "source": "$HOME/.config/fastfetch/logo.png",
-        "width": 35,
-        "height": 15,
+        "width": 34,
+        "height": 14,
         "padding": {
             "top": 2
-        }
-    },
-    "display": {
-        "separator": "->   ",
-        "color": {
-            "separator": "1" // Bold
-        },
-        "constants": [
-            "───────────────────"
-        ],
-        "key": {
-            "type": "both",
-            "paddingLeft": 4
         }
     },
     "modules": [
@@ -29,93 +16,88 @@
         },
         "break",
         {
-            "type": "custom",
-            "format": "┌{$1} {#1}System Information{#} {$1}┐"
-        },
-        "break",
-        {
-            "key": "OS           ",
+            "key": "{icon} OS           ",
             "keyColor": "red",
             "type": "os"
         },
         {
-            "key": "Kernel       ",
+            "key": "{icon} Kernel       ",
             "keyColor": "yellow",
             "type": "kernel"
         },
         {
-            "key": "Machine      ",
+            "key": "{icon} Machine      ",
             "keyColor": "green",
             "type": "host"
         },
         {
-            "key": "Uptime       ",
+            "key": "{icon} Uptime       ",
             "keyColor": "red",
             "type": "uptime"
         },
         {
-            "key": "OS Age       ",
+            "key": "{icon} OS Age       ",
             "type": "disk",
             "keyColor": "green",
             "folders": "/",
             "format": "{days} days"
         },
         {
-            "key": "Resolution   ",
+            "key": "{icon} Resolution   ",
             "keyColor": "yellow",
             "type": "display",
             "compactType": "original-with-refresh-rate"
         },
         {
-            "key": "WM           ",
+            "key": "{icon} WM           ",
             "keyColor": "blue",
             "type": "wm"
         },
         {
-            "key": "DE           ",
+            "key": "{icon} DE           ",
             "keyColor": "green",
             "type": "de"
         },
         {
-            "key": "Shell        ",
+            "key": "{icon} Shell        ",
             "keyColor": "cyan",
             "type": "shell"
         },
         {
-            "key": "Terminal     ",
+            "key": "{icon} Terminal     ",
             "keyColor": "red",
             "type": "terminal"
         },
         {
-            "key": "CPU          ",
+            "key": "{icon} CPU          ",
             "keyColor": "yellow",
             "type": "cpu"
         },
         {
-            "key": "GPU          ",
+            "key": "{icon} GPU          ",
             "keyColor": "blue",
             "type": "gpu"
         },
         {
-            "key": "Memory       ",
+            "key": "{icon} Memory       ",
             "keyColor": "yellow",
             "type": "memory"
         },
         {
-            "key": "Local IP     ",
+            "key": "{icon} Disk         ",
+            "type": "disk",
+            "keyColor": "green"
+        },
+        {
+            "key": "{icon} Local IP     ",
             "keyColor": "red",
             "type": "localip",
             "compact": true
         },
         "break",
         {
-            "type": "custom",
-            "format": "└{$1}────────────────────{$1}┘"
-        },
-        "break",
-        {
             "type": "colors",
-            "paddingLeft": 34,
+            "paddingLeft": 15,
             "symbol": "circle"
         }
     ]
