@@ -77,7 +77,7 @@ hl.animation({ leaf = "border", enabled = true, speed = 3, bezier = "default" })
 hl.config({
     misc = {
 		disable_hyprland_logo = true,
-		disable_splash_rendering = true,
+		disable_splash_rendering = true
 	},
     ecosystem = {
 		no_update_news = true
