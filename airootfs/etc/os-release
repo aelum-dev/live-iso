@@ -1,0 +1,10 @@
+NAME="Aelum"
+PRETTY_NAME="Aelum"
+ID=arch
+ID_LIKE=archlinux
+BUILD_ID=rolling
+ANSI_COLOR="38;2;155;127;242"
+HOME_URL="https://aelum.dev"
+DOCUMENTATION_URL="https://gitlab.com/aelum/live-iso"
+SUPPORT_URL="https://gitlab.com/aelum/live-iso"
+BUG_REPORT_URL="https://gitlab.com/users/aelum/projects"
