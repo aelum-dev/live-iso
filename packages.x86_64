@@ -19,6 +19,7 @@ parted
 dosfstools
 e2fsprogs
 btrfs-progs
+cryptsetup
 pv
 plymouth
 jq
