@@ -5,6 +5,10 @@ Description=Aelum LUKS unlock splash theme
 # as script.so (there is no aelum.so); this is the only scripting engine available.
 ModuleName=script
 
-[aelum]
+# Section MUST be named [script]: the C script engine (script.so) reads
+# ImageDir/ScriptFile from the hardcoded "script" group, not from the theme
+# name. A differently named section yields a NULL ImageDir and a segfault on
+# boot (strdup(NULL) in script_lib_image_setup).
+[script]
 ImageDir=/usr/share/plymouth/themes/aelum
 ScriptFile=/usr/share/plymouth/themes/aelum/aelum.script
