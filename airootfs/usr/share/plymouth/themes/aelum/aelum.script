@@ -24,6 +24,11 @@ progress_bar.original = Image("progress_bar.png");
 #----------------------------------------- State --------------------------------
 
 global.password_shown = 0;
+# animation_frame MUST be global: the script engine treats any name that is
+# never declared at the top level as LOCAL to the function that first uses it.
+# refresh_callback runs in a fresh scope every frame, so an undeclared
+# animation_frame resets to 0 each call and the fake progress bar never moves.
+global.animation_frame = 0;
 global.fake_progress_active = 0;
 global.fake_progress = 0.0;
 global.fake_progress_limit = 0.6;      # fake bar target while unlocking
@@ -51,8 +56,8 @@ fun refresh_callback()
   # Animate the fake progress bar (eases toward the limit) while unlocking
   if (global.fake_progress_active == 1)
   {
-    animation_frame++;
-    elapsed_time = animation_frame / 50.0;   # 50 FPS
+    global.animation_frame++;
+    elapsed_time = global.animation_frame / 50.0;   # 50 FPS
     time_ratio = elapsed_time / global.fake_progress_duration;
     if (time_ratio > 1.0) time_ratio = 1.0;
     eased_ratio = 1 - ((1 - time_ratio) * (1 - time_ratio));   # ease-out quad
