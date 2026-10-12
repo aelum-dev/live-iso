@@ -29,6 +29,10 @@ global.layout_w = 0;
 global.layout_h = 0;
 global.bullets = [];
 
+# Time (in seconds) it takes from hitting Enter on LUKS to reaching the greeter.
+# Tweak this between 1.5 and 2.5 depending on your hardware speed:
+global.post_unlock_duration = 2.0;
+
 progress_bar.image = progress_bar.original.Scale(1, progress_bar.original.GetHeight());
 progress_bar.sprite = Sprite(progress_bar.image);
 progress_bar.sprite.SetOpacity(0);
@@ -52,26 +56,35 @@ fun refresh_callback()
     layout();
   }
 
-  # Adaptive progress animation:
-  # - Fast boot (~7s): Reaches ~82% smoothly.
-  # - Slow / Live-ISO boot (~15-16s): Continues easing up to ~98%.
   if (global.fake_progress_active == 1)
   {
     global.animation_frame++;
     elapsed_time = global.animation_frame / 50.0;   # 50 FPS
 
-    if (elapsed_time <= 7.0)
+    # Select target duration:
+    # Post-LUKS boot only takes ~1.5 - 2.5s; cold boot takes ~7s.
+    if (global.password_shown == 1)
     {
-      ratio = elapsed_time / 7.0;
-      eased = 1.0 - ((1.0 - ratio) * (1.0 - ratio));  # ease-out quad
-      global.fake_progress = eased * 0.82;
+      target_time = global.post_unlock_duration;
     }
     else
     {
-      extra_ratio = (elapsed_time - 7.0) / 9.0;       # 7s to 16s
+      target_time = 7.0;
+    }
+
+    # Animate toward ~85% at target_time, then gracefully ease to 98% if it runs longer
+    if (elapsed_time <= target_time)
+    {
+      ratio = elapsed_time / target_time;
+      eased = 1.0 - ((1.0 - ratio) * (1.0 - ratio));  # ease-out quad
+      global.fake_progress = eased * 0.85;
+    }
+    else
+    {
+      extra_ratio = (elapsed_time - target_time) / (target_time * 1.5);
       if (extra_ratio > 1.0) extra_ratio = 1.0;
       eased_extra = 1.0 - ((1.0 - extra_ratio) * (1.0 - extra_ratio));
-      global.fake_progress = 0.82 + (eased_extra * 0.16); # reaches ~0.98
+      global.fake_progress = 0.85 + (eased_extra * 0.13); # up to 0.98
     }
 
     update_progress_bar(global.fake_progress);
