@@ -35,7 +35,7 @@ global.fake_progress = 0.0;
 # full so the bar keeps moving during the untracked live-ISO boot, where real
 # progress stays put until Plymouth drives it to 100% at the end (become_idle).
 global.fake_progress_limit = 1.0;
-global.fake_progress_duration = 20.0;  # seconds; set to ~your boot time
+global.fake_progress_duration = 15.0;  # seconds; set to ~your boot time
 global.max_progress = 0.0;             # prevent progress bar moving backwards
 global.layout_w = 0;
 global.layout_h = 0;
