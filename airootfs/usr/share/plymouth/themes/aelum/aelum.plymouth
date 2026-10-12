@@ -1,0 +1,10 @@
+[Plymouth Theme]
+Name=aelum
+Description=Aelum LUKS unlock splash theme
+# Engine plugin, not the theme name. Arch's plymouth ships the C "script" engine
+# as script.so (there is no aelum.so); this is the only scripting engine available.
+ModuleName=script
+
+[aelum]
+ImageDir=/usr/share/plymouth/themes/aelum
+ScriptFile=/usr/share/plymouth/themes/aelum/aelum.script
