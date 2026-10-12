@@ -31,9 +31,11 @@ global.password_shown = 0;
 global.animation_frame = 0;
 global.fake_progress_active = 0;
 global.fake_progress = 0.0;
-global.fake_progress_limit = 0.6;      # fake bar target while unlocking
-global.fake_progress_duration = 12.0;  # seconds to reach it
-global.fake_progress_start = 0.0;      # duration when real progress unfreezes
+# The fake bar eases to this fraction over fake_progress_duration. It must reach
+# full so the bar keeps moving during the untracked live-ISO boot, where real
+# progress stays put until Plymouth drives it to 100% at the end (become_idle).
+global.fake_progress_limit = 1.0;
+global.fake_progress_duration = 20.0;  # seconds; set to ~your boot time
 global.max_progress = 0.0;             # prevent progress bar moving backwards
 global.layout_w = 0;
 global.layout_h = 0;
@@ -53,7 +55,9 @@ fun refresh_callback()
     layout();
   }
 
-  # Animate the fake progress bar (eases toward the limit) while unlocking
+  # Animate the fake progress bar (eases toward fake_progress_limit). It carries
+  # the boot while real progress is not reported, and is outpaced by real progress
+  # once the boot is tracked.
   if (global.fake_progress_active == 1)
   {
     global.animation_frame++;
@@ -95,10 +99,9 @@ fun hide_progress_bar()
 fun start_fake_progress()
 {
   global.fake_progress_active = 1;
-  animation_frame = 0;
+  global.animation_frame = 0;
   global.max_progress = 0.0;
   global.fake_progress = 0.0;
-  global.fake_progress_start = 0.0;
 }
 
 fun stop_fake_progress()
@@ -141,9 +144,10 @@ fun position_bullet(index)
 fun display_normal_callback()
 {
   hide_password_dialog();
-  # Show the progress bar for any boot/resume. During a LUKS unlock the real
-  # progress is frozen, so the fake bar (driven in refresh_callback) keeps it
-  # moving; progress_callback hands off to real progress once it unfreezes.
+  # Show the progress bar for any boot/resume. The fake bar (driven in
+  # refresh_callback) eases to full and carries the boot while real progress is
+  # not reported; progress_callback hands the bar back to real progress the
+  # moment real advances past the fake.
   mode = Plymouth.GetMode();
   if ((mode == "boot" || mode == "resume") && !global.password_shown)
   {
@@ -160,13 +164,12 @@ fun display_password_callback(prompt, bullets)
 {
   global.password_shown = 1;
   show_password_dialog();
-  # Keep the progress bar visible and animating while the drive decrypts
-  # (real progress is frozen during unlock). Restart the fake bar if needed.
+  # Keep the progress bar visible while the drive decrypts. Do NOT restart the
+  # fake bar here: real progress is frozen during unlock, and restarting the fake
+  # toward 100% would overshoot and leave the bar stuck after unlock. The bar
+  # simply holds at the pre-unlock level (hidden behind the entry field) and
+  # follows real progress again once the drive decrypts.
   show_progress_bar();
-  if (!global.fake_progress_active)
-  {
-    start_fake_progress();
-  }
 
   # Clear old bullets
   for (index = 0; global.bullets[index]; index++)
@@ -201,13 +204,10 @@ progress_bar.sprite.SetOpacity(0);
 
 fun progress_callback(duration, progress)
 {
-  # duration/progress freeze while the drive is decrypting; capture the
-  # moment they unfreeze so we can hand off from the fake bar to real progress
-  if (global.fake_progress_start == 0.0)
-  {
-    global.fake_progress_start = duration;
-  }
-  if (duration > global.fake_progress_start && progress > global.fake_progress)
+  # Real progress is the source of truth. Hand the bar to it the moment it
+  # advances past the fake bar; update_progress_bar never moves the bar
+  # backwards, so a frozen or untracked boot keeps the fake bar moving instead.
+  if (progress > global.fake_progress)
   {
     stop_fake_progress();
     update_progress_bar(progress);
