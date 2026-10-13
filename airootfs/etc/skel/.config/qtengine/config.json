@@ -1,15 +1,15 @@
 {
   "theme": {
-    "colorScheme": "/usr/share/color-schemes/BreezeDark.colors",
-    "iconTheme": "breeze-dark",
+    "colorScheme": "$HOME/.local/share/color-schemes/DankMatugen.colors",
+    "iconTheme": "breeze",
     "style": "breeze",
     "font": {
-      "family": "DejaVu Sans",
+      "family": "Noto Sans",
       "size": 11,
       "weight": -1
     },
     "fontFixed": {
-      "family": "DejaVu Sans Mono",
+      "family": "Noto Sans Mono",
       "size": 11,
       "weight": -1
     }

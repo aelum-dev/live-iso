@@ -1,5 +1,15 @@
 # Aelum Plymouth theme - LUKS / dm-crypt unlock splash
 # Runs on the C "script" engine (script.so)
+#
+# Two progress modes:
+#  - Installed system: timed fake bar (cold boot / post-LUKS-unlock durations).
+#  - Live ISO: bar follows milestones pushed from the initramfs / systemd with
+#      plymouth update --status=live            (switches to live mode)
+#      plymouth update --status=live:found      (boot device found)
+#      plymouth update --status=live:squashfs   (squashfs mounted)
+#      plymouth update --status=live:overlay    (overlay / cowspace ready)
+#      plymouth update --status=live:switchroot (about to switch root)
+#      plymouth update --status=live:userspace  (userspace is starting)
 
 # Dark mauve-tinted background
 Window.SetBackgroundTopColor(0.071, 0.055, 0.063);
@@ -29,11 +39,14 @@ global.layout_w = 0;
 global.layout_h = 0;
 global.bullets = [];
 
-# Seconds from hitting Enter on LUKS to reaching the greeter.
-# Tweak between 1.5 and 2.5 depending on your hardware speed.
-global.post_unlock_duration = 2.0;
-# Seconds for a cold boot (no LUKS prompt seen yet).
-global.cold_boot_duration = 7.0;
+# Installed-system timing (seconds). Tune so the bar fills as Plymouth quits.
+global.post_unlock_duration = 2.0;   # Enter on LUKS -> greeter
+global.cold_boot_duration = 7.0;     # boot without a LUKS prompt
+
+# Live ISO mode
+global.live = 0;
+global.live_goal = 0.0;
+global.live_progress = 0.0;
 
 progress_bar.image = progress_bar.original.Scale(1, progress_bar.original.GetHeight());
 progress_bar.sprite = Sprite(progress_bar.image);
@@ -57,8 +70,8 @@ fun position_bullet(index)
                                     10002);
 }
 
-# Monotonic: the bar only ever moves forward, so fake and real progress
-# can both feed it and whichever is ahead wins.
+# Monotonic: the bar only ever moves forward, so several sources can feed it
+# and whichever is ahead wins.
 fun update_progress_bar(progress)
 {
   if (progress > global.max_progress)
@@ -84,7 +97,7 @@ fun hide_progress_bar()
 }
 
 # Restarts the fake timer only. max_progress is kept, so the bar never
-# snaps back to zero and real progress can't cause a jump after unlock.
+# snaps back to zero after the LUKS prompt.
 fun start_fake_progress()
 {
   global.fake_progress_active = 1;
@@ -94,6 +107,15 @@ fun start_fake_progress()
 fun stop_fake_progress()
 {
   global.fake_progress_active = 0;
+}
+
+# Live mode goals only ever increase.
+fun set_live_goal(goal)
+{
+  if (goal > global.live_goal)
+  {
+    global.live_goal = goal;
+  }
 }
 
 #----------------------------------------- Layout --------------------------------
@@ -150,12 +172,27 @@ fun refresh_callback()
     layout();
   }
 
-  if (global.fake_progress_active == 1)
+  if (global.live == 1)
+  {
+    # Live ISO: ease toward the latest milestone. Once there, creep slowly
+    # (up to 6% past it, never beyond 98%) so the bar doesn't look frozen
+    # while a long stage is still running.
+    diff = global.live_goal - global.live_progress;
+    if (diff > 0.005)
+    {
+      global.live_progress += diff * 0.03;
+    }
+    else if (global.live_progress < global.live_goal + 0.06 && global.live_progress < 0.98)
+    {
+      global.live_progress += 0.0002;
+    }
+    update_progress_bar(global.live_progress);
+  }
+  else if (global.fake_progress_active == 1)
   {
     global.animation_frame++;
     elapsed_time = global.animation_frame / 50.0;   # plymouthd refreshes at ~50 FPS
 
-    # Post-LUKS boot only takes ~1.5 - 2.5s; cold boot takes ~7s.
     if (global.password_shown == 1)
     {
       target_time = global.post_unlock_duration;
@@ -165,11 +202,21 @@ fun refresh_callback()
       target_time = global.cold_boot_duration;
     }
 
-    # Single smooth curve: p = 0.98 * x / (x + 0.15), x = elapsed / target.
-    # Reaches ~85% at target_time, then keeps creeping toward 98% without
-    # ever hitting it. Velocity is continuous, so there is no lurch.
+    # Plymouth quits right around target_time, so the bar must be nearly full
+    # by then. Ease-out quad to 97% at target_time; if boot runs long, creep
+    # slowly to 99% so it never looks finished while still booting.
     x = elapsed_time / target_time;
-    update_progress_bar(0.98 * x / (x + 0.15));
+    if (x <= 1.0)
+    {
+      p = 0.97 * (1.0 - (1.0 - x) * (1.0 - x));
+    }
+    else
+    {
+      extra = (x - 1.0) / 1.5;
+      if (extra > 1.0) extra = 1.0;
+      p = 0.97 + 0.02 * extra;
+    }
+    update_progress_bar(p);
   }
 }
 
@@ -250,13 +297,38 @@ fun display_password_callback(prompt, bullets)
 Plymouth.SetDisplayNormalFunction(display_normal_callback);
 Plymouth.SetDisplayPasswordFunction(display_password_callback);
 
+#----------------------------------------- Status (live ISO milestones) --------------------------------
+
+fun status_callback(status)
+{
+  if (status == "live")
+  {
+    # Switch to live mode, continuing from wherever the bar already is
+    global.live = 1;
+    global.live_progress = global.max_progress;
+    stop_fake_progress();
+    show_progress_bar();
+  }
+  if (status == "live:found")      set_live_goal(0.15);
+  if (status == "live:squashfs")   set_live_goal(0.45);
+  if (status == "live:overlay")    set_live_goal(0.60);
+  if (status == "live:switchroot") set_live_goal(0.75);
+  if (status == "live:userspace")  set_live_goal(0.97);
+}
+
+Plymouth.SetUpdateStatusFunction(status_callback);
+
 #----------------------------------------- Real Progress Callback --------------------------------
 
 fun progress_callback(duration, progress)
 {
-  # update_progress_bar is monotonic, so real progress simply wins
-  # whenever it is ahead of the simulated bar.
-  update_progress_bar(progress);
+  # Plymouth's own progress is cache-based and meaningless on a live ISO,
+  # so ignore it there. Otherwise the monotonic bar lets real progress win
+  # whenever it is ahead of the simulated one.
+  if (global.live == 0)
+  {
+    update_progress_bar(progress);
+  }
 }
 
 Plymouth.SetBootProgressFunction(progress_callback);
