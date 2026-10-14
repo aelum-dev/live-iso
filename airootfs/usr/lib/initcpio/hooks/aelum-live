@@ -1,0 +1,87 @@
+#!/usr/bin/ash
+#
+# SPDX-License-Identifier: GPL-3.0
+#
+# Aelum live-ISO boot progress: feeds Aelum's Plymouth theme real milestones
+# instead of the theme's stand-in timer.
+#
+# The theme (airootfs/usr/share/plymouth/themes/aelum/aelum.script) reacts to
+# "plymouth update --status=live[:STAGE]" and parks its bar on the matching
+# milestone. This hook is the only place in the ISO that sends those strings,
+# so every stage below is an observed system event, not a guess:
+#
+#   live             run_hook      splash is up, the ISO mount phase is starting
+#   live:found       polled        the ISO device is mounted at /run/archiso/bootmnt
+#   live:squashfs    polled        the airootfs image is mounted at /run/archiso/airootfs
+#   live:overlay     polled        the live root is mounted at /sysroot
+#   live:switchroot  run_latehook  the last thing init does before switch_root
+#
+# The three polled stages happen inside archiso's own mount handler, which is
+# owned by the mkinitcpio-archiso package and changes around it. Rather than
+# forking that code, the poller watches /proc/mounts from the background while
+# the handler runs, so this hook keeps working when archiso is updated.
+#
+# Ordering matters: this hook sits after "plymouth" in HOOKS, so plymouthd is
+# already listening when run_hook fires, and our run_latehook runs after
+# plymouth's, immediately before switch_root.
+
+# Send one status string to Plymouth. Quiet and non-fatal: if the splash is
+# not up (no splash kernel parameter, plymouth.enable=0, ...) we do nothing.
+aelum_plymouth_status() {
+    [ -e /run/plymouth/pid ] || return 0
+    /usr/bin/plymouth update --status="$1" >/dev/null 2>&1 || :
+}
+
+# Is $1 a mountpoint in the current mount table? Mountpoints are matched
+# exactly, plus the trailing-slash form that "mount /sysroot/" leaves behind.
+aelum_is_mounted() {
+    local _dev _mp _fstype _rest
+    while read -r _dev _mp _fstype _rest; do
+        case "$_mp" in
+            "$1" | "$1"/) return 0 ;;
+        esac
+    done < /proc/mounts
+    return 1
+}
+
+# Follow the mount handler's progress once per second until the live root is
+# up. "sleep" is a busybox applet, linked into the initramfs by the base hook.
+aelum_watch_stages() {
+    local _i=0 _found=0 _squashfs=0
+
+    while [ "$_i" -lt 240 ]; do
+        if [ "$_found" -eq 0 ] && aelum_is_mounted /run/archiso/bootmnt; then
+            aelum_plymouth_status live:found
+            _found=1
+        fi
+
+        if [ "$_found" -eq 1 ] && [ "$_squashfs" -eq 0 ] &&
+            aelum_is_mounted /run/archiso/airootfs; then
+            aelum_plymouth_status live:squashfs
+            _squashfs=1
+        fi
+
+        if aelum_is_mounted /sysroot; then
+            aelum_plymouth_status live:overlay
+            return 0
+        fi
+
+        sleep 1
+        _i=$(( _i + 1 ))
+    done
+}
+
+run_hook() {
+    # Switch the theme out of its timed mode; the bar then tracks milestones.
+    aelum_plymouth_status live
+
+    # Watch the mount stages without blocking the mount handler.
+    aelum_watch_stages >/dev/null 2>&1 &
+}
+
+run_latehook() {
+    # Runs after the mounts are done and right before switch_root.
+    aelum_plymouth_status live:switchroot
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

@@ -58,6 +58,7 @@ This repo is the **Aelum profile** — the content that goes into the ISO. The b
 │   │   ├── skel/.hushlogin    # Suppress "Last login" message
 │   │   ├── systemd/system/    # Systemd units (animation delay, etc.)
 │   │   └── sudoers.d/         # Sudo config for aelum user
+│   ├── usr/lib/initcpio/             # Live ISO mkinitcpio hooks (aelum-live)
 │   └── usr/share/DankMaterialShell/  # DMS desktop files
 ├── efiboot/               # systemd-boot EFI boot entries
 │   └── loader/entries/
@@ -82,6 +83,26 @@ This repo only holds the profile content that goes into the ISO. See the [docker
 All packages needed for the install are cached in `airootfs/var/cache/aelum/offline-mirror/` and served via a `file://` URL in the ISO's pacman.conf, so the install doesn't reach the network. This applies to installation only — the installed system is a regular Arch install and uses the internet for updates and anything else you add.
 
 Because every package is included, **installation takes about 1 minute**, and the **complete OS requires roughly 4.7 GB of disk space** after install.
+
+---
+
+## Boot Splash Progress (Plymouth)
+
+`airootfs/usr/share/plymouth/themes/aelum/aelum.script` has two progress modes:
+
+- **Installed system** — a timed stand-in bar (cold boot / post-LUKS unlock). Real
+  install-time progress is not knowable on Arch, so the timer stays.
+- **Live ISO** — the bar follows real events. `usr/lib/initcpio/hooks/aelum-live`
+  sends `plymouth update --status=live[:STAGE]` for every stage it sees in
+  `/proc/mounts` while archiso mounts, and pings `switchroot` immediately before
+  `switch_root`. `etc/systemd/system/aelum-live-progress.service` sends the final
+  `userspace` milestone just before `plymouth-quit-wait.service` dismisses the
+  splash. The stages the theme reacts to are listed in the theme's header.
+
+The hook must stay **after `plymouth`** in `HOOKS` (`etc/mkinitcpio.conf.d/archiso.conf`):
+it only talks to an already-started `plymouthd`, and its `run_latehook` has to run
+after plymouth's. Both halves of the hook are declared in `profiledef.sh` with mode
+`0755` — mkinitcpio finds hooks with `type -P`, and mkarchiso does not copy exec bits.
 
 ---
 

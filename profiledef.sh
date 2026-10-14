@@ -21,4 +21,8 @@ file_permissions=(
   ["/usr/local/bin/aelum-installer"]="0:0:755"
   ["/usr/local/bin/aelum-installer-cli"]="0:0:755"
   ["/usr/local/bin/auto-scale-monitor.sh"]="0:0:755"
+  # mkinitcpio finds hooks with `type -P`, so both halves of the boot-progress
+  # hook need the executable bit (mkarchiso copies airootfs without modes).
+  ["/usr/lib/initcpio/hooks/aelum-live"]="0:0:755"
+  ["/usr/lib/initcpio/install/aelum-live"]="0:0:755"
 )

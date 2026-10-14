@@ -10,6 +10,8 @@
 #      plymouth update --status=live:overlay    (overlay / cowspace ready)
 #      plymouth update --status=live:switchroot (about to switch root)
 #      plymouth update --status=live:userspace  (userspace is starting)
+#      Senders: usr/lib/initcpio/hooks/aelum-live (everything up to switchroot)
+#      and etc/systemd/system/aelum-live-progress.service (userspace).
 
 # Dark mauve-tinted background
 Window.SetBackgroundTopColor(0.071, 0.055, 0.063);

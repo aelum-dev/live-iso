@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: GPL-3.0
+#
+# Last live-ISO milestone: userspace has taken over from the initramfs, so the
+# splash is about to quit (plymouth-quit-wait runs right after this). The bar
+# parks near full and the theme's creep fills the rest while greetd starts.
+#
+# Ordering is the whole point of this unit: it must land before the splash is
+# dismissed, i.e. before plymouth-quit-wait.service.
+
+[Unit]
+Description=Aelum live-ISO boot progress: userspace milestone
+After=plymouth-start.service
+Before=plymouth-quit-wait.service
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/bin/plymouth update --status=live:userspace
+
+[Install]
+WantedBy=multi-user.target
