@@ -1,16 +1,31 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # Last live-ISO milestone: userspace has taken over from the initramfs, so the
-# splash is about to quit (plymouth-quit-wait runs right after this). The bar
-# parks near full and the theme's creep fills the rest while greetd starts.
+# splash is about to quit. The theme reacts to this status by pushing its bar
+# straight to 100%.
 #
-# Ordering is the whole point of this unit: it must land before the splash is
-# dismissed, i.e. before plymouth-quit-wait.service.
+# Ordering is the whole point of this unit. Plymouth ships two of its own units
+# as static symlinks into multi-user.target.wants:
+#
+#   plymouth-quit.service       runs "plymouth quit"  -> this is what dismisses
+#                                                       the splash
+#   plymouth-quit-wait.service  runs "plymouth --wait" -> runs after quit, it
+#                                                       only holds the boot
+#                                                       process up
+#
+# Both are ordered merely "After=... systemd-user-sessions.service", and
+# nothing orders them against our unit. Declaring Before=plymouth-quit-wait
+# alone left us racing plymouth-quit, which reliably won: the status arrived
+# after the splash was already gone, so the bar never completed.
+#
+# Pin the unit into the last window instead: after systemd-user-sessions,
+# before BOTH quit units. That is the final moment at which the splash is
+# still on screen.
 
 [Unit]
 Description=Aelum live-ISO boot progress: userspace milestone
-After=plymouth-start.service
-Before=plymouth-quit-wait.service
+After=plymouth-start.service systemd-user-sessions.service
+Before=plymouth-quit.service plymouth-quit-wait.service
 
 [Service]
 Type=oneshot

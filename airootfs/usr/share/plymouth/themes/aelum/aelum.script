@@ -9,7 +9,7 @@
 #      plymouth update --status=live:squashfs   (squashfs mounted)
 #      plymouth update --status=live:overlay    (overlay / cowspace ready)
 #      plymouth update --status=live:switchroot (about to switch root)
-#      plymouth update --status=live:userspace  (userspace is starting)
+#      plymouth update --status=live:userspace  (last milestone: fills the bar)
 #      Senders: usr/lib/initcpio/hooks/aelum-live (everything up to switchroot)
 #      and etc/systemd/system/aelum-live-progress.service (userspace).
 
@@ -184,8 +184,16 @@ fun refresh_callback()
     {
       global.live_progress += diff * 0.03;
     }
+    else if (diff > 0)
+    {
+      # Close enough: park on the milestone exactly, so the bar never stops a
+      # hair short of a goal and the next push starts from a round number.
+      global.live_progress = global.live_goal;
+    }
     else if (global.live_progress < global.live_goal + 0.06 && global.live_progress < 0.98)
     {
+      # Long stage still running: creep past the milestone (never past 98%
+      # unless a milestone says so).
       global.live_progress += 0.0002;
     }
     update_progress_bar(global.live_progress);
@@ -315,7 +323,16 @@ fun status_callback(status)
   if (status == "live:squashfs")   set_live_goal(0.45);
   if (status == "live:overlay")    set_live_goal(0.60);
   if (status == "live:switchroot") set_live_goal(0.75);
-  if (status == "live:userspace")  set_live_goal(0.97);
+  if (status == "live:userspace")
+  {
+    # Last milestone, and it is sent milliseconds before plymouth-quit.service
+    # runs "plymouth quit". Easing toward a goal cannot finish in that window,
+    # so this one is a straight push to full: the bar reads 100% before the
+    # splash is dismissed.
+    set_live_goal(1.0);
+    global.live_progress = 1.0;
+    update_progress_bar(1.0);
+  }
 }
 
 Plymouth.SetUpdateStatusFunction(status_callback);
