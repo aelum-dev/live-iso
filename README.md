@@ -91,7 +91,10 @@ Because every package is included, **installation takes about 1 minute**, and th
 `airootfs/usr/share/plymouth/themes/aelum/aelum.script` has two progress modes:
 
 - **Installed system** — a timed stand-in bar (cold boot / post-LUKS unlock). Real
-  install-time progress is not knowable on Arch, so the timer stays.
+  install-time progress is not knowable on Arch, so the timer stays. Because the
+  timer cannot know when boot ends, the installer also drops
+  `aelum-boot-progress.service` into the target; like the live ISO's unit it
+  sends `boot:complete` just before plymouth-quit, pushing the bar to 100%.
 - **Live ISO** — the bar follows real events. `usr/lib/initcpio/hooks/aelum-live`
   sends `plymouth update --status=live[:STAGE]` for every stage it sees in
   `/proc/mounts` while archiso mounts, and pings `switchroot` immediately before

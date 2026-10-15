@@ -2,7 +2,8 @@
 # Runs on the C "script" engine (script.so)
 #
 # Two progress modes:
-#  - Installed system: timed fake bar (cold boot / post-LUKS-unlock durations).
+#  - Installed system: timed fake bar (cold boot / post-LUKS-unlock durations),
+#      plus whichever plymouth progress value is further ahead.
 #  - Live ISO: bar follows milestones pushed from the initramfs / systemd with
 #      plymouth update --status=live            (switches to live mode)
 #      plymouth update --status=live:found      (boot device found)
@@ -12,6 +13,12 @@
 #      plymouth update --status=live:userspace  (last milestone: fills the bar)
 #      Senders: usr/lib/initcpio/hooks/aelum-live (everything up to switchroot)
 #      and etc/systemd/system/aelum-live-progress.service (userspace).
+#  - Both modes: a final pre-quit milestone pushes the bar to 100% no matter
+#      where the timer or plymouth's own progress had reached:
+#      plymouth update --status=live:userspace  (live ISO)
+#      plymouth update --status=boot:complete   (installed system)
+#      These arrive milliseconds before plymouth-quit dismisses the splash, so
+#      neither mode has to guess the boot duration to finish the bar.
 
 # Dark mauve-tinted background
 Window.SetBackgroundTopColor(0.071, 0.055, 0.063);
@@ -127,6 +134,16 @@ fun set_live_goal(goal)
   {
     global.live_goal = goal;
   }
+}
+
+# Jump straight to full. Both modes call this on their final pre-quit
+# milestone: the splash is dismissed milliseconds later, so easing toward a
+# goal could never render its last frame. Setting the image directly can.
+fun finish_progress()
+{
+  set_live_goal(1.0);
+  global.live_progress = 1.0;
+  update_progress_bar(1.0);
 }
 
 #----------------------------------------- Layout --------------------------------
@@ -339,7 +356,7 @@ fun display_password_callback(prompt, bullets)
 Plymouth.SetDisplayNormalFunction(display_normal_callback);
 Plymouth.SetDisplayPasswordFunction(display_password_callback);
 
-#----------------------------------------- Status (live ISO milestones) --------------------------------
+#----------------------------------------- Status (boot milestones) --------------------------------
 
 fun status_callback(status)
 {
@@ -363,9 +380,17 @@ fun status_callback(status)
     # runs "plymouth quit". Easing toward a goal cannot finish in that window,
     # so this one is a straight push to full: the bar reads 100% before the
     # splash is dismissed.
-    set_live_goal(1.0);
-    global.live_progress = 1.0;
-    update_progress_bar(1.0);
+    finish_progress();
+  }
+  if (status == "boot:complete")
+  {
+    # Installed-system twin of live:userspace. On a normal boot there is no
+    # initramfs hook feeding us, so the timed bar only knows the elapsed
+    # stopwatch -- it cannot know when plymouth is about to quit and therefore
+    # stalls wherever the time happened to be (typically short of 100%). The
+    # installer's aelum-boot-progress.service sends this right before
+    # plymouth-quit, so the bar lands on 100% before the greeter appears.
+    finish_progress();
   }
 }
 
