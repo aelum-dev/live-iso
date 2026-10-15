@@ -37,9 +37,17 @@ global.password_shown = 0;
 global.animation_frame = 0;
 global.fake_progress_active = 0;
 global.max_progress = 0.0;
+global.layout_x = 0;
+global.layout_y = 0;
 global.layout_w = 0;
 global.layout_h = 0;
 global.bullets = [];
+
+# Wall clock (seconds since plymouthd started) reported by Plymouth's boot
+# progress callback. 0 means "not seen yet"; the frame counter is then the
+# fallback, so an absent clock cannot freeze the bar.
+global.now = 0.0;
+global.fake_start_time = 0.0;
 
 # Installed-system timing (seconds). Tune so the bar fills as Plymouth quits.
 global.post_unlock_duration = 2.0;   # Enter on LUKS -> greeter
@@ -104,6 +112,7 @@ fun start_fake_progress()
 {
   global.fake_progress_active = 1;
   global.animation_frame = 0;
+  global.fake_start_time = global.now;
 }
 
 fun stop_fake_progress()
@@ -124,8 +133,16 @@ fun set_live_goal(goal)
 
 fun layout()
 {
+  global.layout_x = Window.GetX();
+  global.layout_y = Window.GetY();
   global.layout_w = Window.GetWidth();
   global.layout_h = Window.GetHeight();
+
+  # Center of the whole splash window. Window.GetX/GetY are non-zero when the
+  # splash is not on the top-left display, so centering on layout_w alone would
+  # push everything off-screen on a multi-monitor setup.
+  center_x = global.layout_x + global.layout_w / 2;
+  center_y = global.layout_y + global.layout_h / 2;
 
   # Scale logo from the pristine original every time
   logo_h = 200;
@@ -133,27 +150,28 @@ fun layout()
   logo.image = logo.original.Scale(logo_w, logo_h);
   logo.sprite.SetImage(logo.image);
 
-  logo.sprite.SetX(global.layout_w / 2 - logo.image.GetWidth() / 2);
-  logo.sprite.SetY(global.layout_h / 2 - logo.image.GetHeight() / 2 - 24);
+  logo.sprite.SetX(center_x - logo.image.GetWidth() / 2);
+  logo.sprite.SetY(center_y - logo.image.GetHeight() / 2 - 24);
 
   # Entry field
-  entry.x = global.layout_w / 2 - entry.image.GetWidth() / 2;
+  entry.x = center_x - entry.image.GetWidth() / 2;
   entry.y = logo.sprite.GetY() + logo.image.GetHeight() + 48;
   entry.sprite.SetPosition(entry.x, entry.y, 10001);
 
-  # Lock icon
+  # Lock icon, at the same depth as the entry field
   scale = entry.image.GetHeight() / lock.image.GetHeight();
   lock.w = Math.Int(lock.image.GetWidth() * scale);
   lock.h = Math.Int(lock.image.GetHeight() * scale);
   lock.sprite.SetImage(lock.image.Scale(lock.w, lock.h));
-  lock.sprite.SetX(entry.x - lock.w - 14);
-  lock.sprite.SetY(entry.y + entry.image.GetHeight() / 2 - lock.h / 2);
+  lock.sprite.SetPosition(entry.x - lock.w - 14,
+                          entry.y + entry.image.GetHeight() / 2 - lock.h / 2,
+                          10001);
 
   # Progress bar
-  box_x = global.layout_w / 2 - progress_box.image.GetWidth() / 2;
+  box_x = center_x - progress_box.image.GetWidth() / 2;
   box_y = entry.y + entry.image.GetHeight() + 40;
   progress_box.sprite.SetPosition(box_x, box_y, 0);
-  progress_bar.sprite.SetPosition(global.layout_w / 2 - progress_bar.original.GetWidth() / 2,
+  progress_bar.sprite.SetPosition(center_x - progress_bar.original.GetWidth() / 2,
                                   box_y + (progress_box.image.GetHeight() - progress_bar.original.GetHeight()) / 2,
                                   1);
 
@@ -169,7 +187,8 @@ fun layout()
 fun refresh_callback()
 {
   # Re-center if display layout updates late
-  if (Window.GetWidth() != global.layout_w || Window.GetHeight() != global.layout_h)
+  if (Window.GetX() != global.layout_x || Window.GetY() != global.layout_y ||
+      Window.GetWidth() != global.layout_w || Window.GetHeight() != global.layout_h)
   {
     layout();
   }
@@ -201,7 +220,13 @@ fun refresh_callback()
   else if (global.fake_progress_active == 1)
   {
     global.animation_frame++;
-    elapsed_time = global.animation_frame / 50.0;   # plymouthd refreshes at ~50 FPS
+
+    # Prefer the real wall clock: the refresh loop is a minimum-delay timer, so
+    # counting frames drifts late on a loaded boot. Fall back to frames (~50/s)
+    # when Plymouth has not reported a clock yet.
+    elapsed_frames = global.animation_frame / 50.0;
+    elapsed_clock = global.now - global.fake_start_time;
+    elapsed_time = Math.Max(elapsed_clock, elapsed_frames);
 
     if (global.password_shown == 1)
     {
@@ -232,6 +257,10 @@ fun refresh_callback()
 
 Plymouth.SetRefreshFunction(refresh_callback);
 
+# Pin the refresh rate the frame-count fallback assumes (this is already the
+# engine default, but stating it keeps the 50/s conversion honest).
+Plymouth.SetRefreshRate(50);
+
 #----------------------------------------- Dialogue & Hooks --------------------------------
 
 fun show_password_dialog()
@@ -255,8 +284,11 @@ fun display_normal_callback()
 {
   hide_password_dialog();
 
+  # Plymouth.GetMode() reports "boot" for a normal (and a resume) boot; the
+  # remaining values are the update modes the splash can be shown in.
   mode = Plymouth.GetMode();
-  if (mode == "boot" || mode == "resume" || mode == "updates" || mode == "system-upgrade")
+  if (mode == "boot" || mode == "updates" || mode == "system-upgrade" ||
+      mode == "firmware-upgrade" || mode == "system-reset")
   {
     show_progress_bar();
     if (!global.fake_progress_active)
@@ -283,8 +315,8 @@ fun display_password_callback(prompt, bullets)
     global.bullets[index].SetOpacity(0);
   }
 
-  # Max bullets that fit inside the entry box (16px padding each side,
-  # 9px bullet, 14px pitch)
+  # Max bullets that fit inside the entry box: 16px left padding, 9px bullet,
+  # 14px pitch, and at least 16px kept free on the right.
   max_bullets = Math.Int((entry.image.GetWidth() - 27) / 14);
   if (max_bullets < 1) max_bullets = 1;
 
@@ -313,7 +345,9 @@ fun status_callback(status)
 {
   if (status == "live")
   {
-    # Switch to live mode, continuing from wherever the bar already is
+    # Switch to live mode, continuing from wherever the bar already is. The bar
+    # is monotonic, so if it has already passed an early milestone that
+    # milestone is a no-op -- it can never rewind to re-show it.
     global.live = 1;
     global.live_progress = global.max_progress;
     stop_fake_progress();
@@ -341,6 +375,10 @@ Plymouth.SetUpdateStatusFunction(status_callback);
 
 fun progress_callback(duration, progress)
 {
+  # duration is a wall clock (seconds since plymouthd started). The fake timer
+  # reads it so its bar does not drift late when the refresh loop falls behind.
+  global.now = duration;
+
   # Plymouth's own progress is cache-based and meaningless on a live ISO,
   # so ignore it there. Otherwise the monotonic bar lets real progress win
   # whenever it is ahead of the simulated one.
@@ -362,8 +400,8 @@ fun display_message_callback(text)
   img = Image.Text(text, 1, 1, 1);
   message_sprite.SetImage(img);
   message_sprite.SetOpacity(0.9);
-  message_sprite.SetX((Window.GetWidth() - img.GetWidth()) / 2);
-  message_sprite.SetY(Window.GetHeight() - img.GetHeight() - 12);
+  message_sprite.SetX(Window.GetX() + (Window.GetWidth() - img.GetWidth()) / 2);
+  message_sprite.SetY(Window.GetY() + Window.GetHeight() - img.GetHeight() - 12);
 }
 
 fun hide_message_callback(text)
