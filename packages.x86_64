@@ -20,6 +20,7 @@ dosfstools
 e2fsprogs
 btrfs-progs
 cryptsetup
+lvm2
 pv
 plymouth
 jq
