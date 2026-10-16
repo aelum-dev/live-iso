@@ -12,7 +12,15 @@ bootmodes=('bios.syslinux'
            'uefi.grub')
 pacman_conf="pacman.conf"
 airootfs_image_type="squashfs"
-airootfs_image_tool_options=('-comp' 'xz' '-Xbcj' 'x86' '-b' '1M' '-Xdict-size' '1M')
+# zstd instead of xz: the kernel decodes one xz LZMA2 stream per block on a
+# single core (~90 MB/s), while zstd decodes roughly an order of magnitude
+# faster per core. The live ISO also mounts this image with threads=percpu so
+# independent blocks decode in parallel (see
+# usr/local/share/aelum/squashfs/patch-archiso-mount.sh). Most of the image is
+# the offline mirror of already-compressed .pkg.tar.zst packages, which
+# mksquashfs stores uncompressed either way, so the size cost is well under the
+# raw ratio difference. Level 19 is a size/speed compromise for the build.
+airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '19' '-b' '1M')
 bootstrap_tarball_compression=(xz -9e)
 file_permissions=(
   ["/etc/shadow"]="0:0:400"

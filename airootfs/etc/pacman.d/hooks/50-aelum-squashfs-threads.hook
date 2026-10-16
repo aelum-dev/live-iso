@@ -1,0 +1,23 @@
+# remove from airootfs!
+#
+# Build-time only. Adds threads=percpu to the archiso hook's airootfs squashfs
+# mount so the kernel decompresses independent blocks on more than one core.
+# See usr/local/share/aelum/squashfs/patch-archiso-mount.sh for the details.
+#
+# The 50- prefix matters: mkinitcpio builds the live initramfs from its own
+# PostTransaction hook, 90-mkinitcpio-install.hook, and pacman runs hooks in
+# alphabetical filename order. This hook must run first so the initramfs is
+# built from the patched archiso hook. It is stripped from the shipped ISO by
+# zzzz99-remove-custom-hooks-from-airootfs.hook.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+Description = Enabling parallel squashfs decompression (threads=percpu) for the live ISO...
+When = PostTransaction
+Depends = mkinitcpio-archiso
+Depends = bash
+Exec = /usr/bin/bash /usr/local/share/aelum/squashfs/patch-archiso-mount.sh
