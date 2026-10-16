@@ -1,0 +1,25 @@
+# remove from airootfs!
+#
+# Build-time only. Pre-builds the live ISO's Fontconfig cache so the first GUI
+# process (the installer) does not cold-read every font through the squashfs.
+# See usr/local/share/aelum/fontconfig/prebuild-fontconfig-cache.sh for why the
+# stock fontconfig.hook is not enough.
+#
+# This replaces the deprecated airootfs/root/customize_airootfs.sh. The name is
+# deliberately sorted after usr/share/libalpm/hooks/fontconfig.hook so this
+# rebuild gets the last word on the cache, and before
+# zzzz99-remove-custom-hooks-from-airootfs.hook, which then deletes this file so
+# it never ships in the ISO (upstream FS#49347: it must not run when pacstrap is
+# driven from the live environment).
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = *
+
+[Action]
+Description = Pre-building the Fontconfig cache for the live ISO...
+When = PostTransaction
+Depends = fontconfig
+Depends = bash
+Exec = /usr/bin/bash /usr/local/share/aelum/fontconfig/prebuild-fontconfig-cache.sh
