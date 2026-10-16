@@ -99,8 +99,12 @@ Because every package is included, **installation takes about 1 minute**, and th
   sends `plymouth update --status=live[:STAGE]` for every stage it sees in
   `/proc/mounts` while archiso mounts, and pings `switchroot` immediately before
   `switch_root`. `etc/systemd/system/aelum-live-progress.service` sends the final
-  `userspace` milestone just before `plymouth-quit-wait.service` dismisses the
-  splash. The stages the theme reacts to are listed in the theme's header.
+  `userspace` milestone immediately before `plymouth-quit.service` dismisses the
+  splash. It is ordered `Before=` that unit, and holds the splash for a few
+  refresh intervals after sending the status so the 100% frame is actually
+  composited — otherwise the status and the quit land a couple of frames apart
+  and the bar can get cut short. The stages the theme reacts to are listed in
+  the theme's header.
 
 The hook must stay **after `plymouth`** in `HOOKS` (`etc/mkinitcpio.conf.d/archiso.conf`):
 it only talks to an already-started `plymouthd`, and its `run_latehook` has to run
