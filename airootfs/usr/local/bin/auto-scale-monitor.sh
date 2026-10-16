@@ -11,6 +11,11 @@
 #
 # Usage: Called from hyprland.lua autostart via hl.exec_cmd().
 # No arguments needed — it queries hyprctl for connected monitors.
+#
+# The live-ISO session runs this script to completion *before* it starts the
+# installer, so the installer window is created at the final scale. Keep it
+# fast (no unconditional sleeps) and make it return only once Hyprland
+# actually reports the scale it asked for, otherwise that gate is meaningless.
 
 set -euo pipefail
 
@@ -47,22 +52,31 @@ if ! command -v hyprctl &>/dev/null; then
     exit 0
 fi
 
-# Small initial delay to ensure Hyprland IPC is fully initialized
-sleep 1
+# Check if jq is available
+if ! command -v jq &>/dev/null; then
+    log "jq not found, skipping"
+    exit 0
+fi
 
-# Wait for Hyprland IPC to be ready (max 10 attempts, 0.5s apart)
+# Wait for Hyprland IPC to be ready (max 2s, 0.1s apart). No fixed pre-sleep:
+# at hyprland.start the socket is up almost immediately, and the live-ISO
+# session blocks on this script before launching the installer, so every
+# unnecessary millisecond here delays the installer.
 log "waiting for Hyprland IPC..."
-for attempt in 1 2 3 4 5 6 7 8 9 10; do
+ipc_ready=0
+for attempt in $(seq 1 20); do
     if hyprctl monitors -j >/dev/null 2>&1; then
         log "IPC ready on attempt ${attempt}"
+        ipc_ready=1
         break
     fi
-    if [ "$attempt" -eq 10 ]; then
-        log "IPC not ready after 10 attempts, skipping"
-        exit 0
-    fi
-    sleep 0.5
+    sleep 0.1
 done
+
+if [ "$ipc_ready" -ne 1 ]; then
+    log "IPC not ready after 2s, skipping"
+    exit 0
+fi
 
 # Get monitor data as JSON
 MONITOR_JSON=$(hyprctl monitors -j 2>/dev/null || echo "[]")
@@ -73,17 +87,13 @@ if [ "$MONITOR_JSON" = "[]" ] || [ -z "$MONITOR_JSON" ]; then
     exit 0
 fi
 
-# Check if jq is available
-if ! command -v jq &>/dev/null; then
-    log "jq not found, skipping"
-    exit 0
-fi
-
 MONITOR_COUNT=$(echo "$MONITOR_JSON" | jq 'length')
 log "detected ${MONITOR_COUNT} monitor(s)"
 
 # Track if we've set the primary monitor position
 primary_set=false
+# Monitors we actually reconfigured, as "name:scale", verified below
+applied=()
 
 for ((i = 0; i < MONITOR_COUNT; i++)); do
     # Extract monitor properties
@@ -110,9 +120,31 @@ for ((i = 0; i < MONITOR_COUNT; i++)); do
     MODE="${WIDTH}x${HEIGHT}@${REFRESH}"
 
     # Apply via hyprctl eval (Hyprland 0.55+ Lua API)
-    hyprctl eval "hl.monitor({output='${OUTPUT_NAME}', mode='${MODE}', position='${POSITION}', scale=${SCALE}})" 2>/dev/null && \
-        log "${OUTPUT_NAME}: ${MODE} scale=${SCALE} pos=${POSITION}" || \
+    if hyprctl eval "hl.monitor({output='${OUTPUT_NAME}', mode='${MODE}', position='${POSITION}', scale=${SCALE}})" >/dev/null 2>&1; then
+        log "${OUTPUT_NAME}: ${MODE} scale=${SCALE} pos=${POSITION}"
+        applied+=("${OUTPUT_NAME}:${SCALE}")
+    else
         log "WARNING: failed to set ${OUTPUT_NAME}"
+    fi
+done
+
+# hyprctl returns as soon as Hyprland accepts the command, but the output
+# reconfiguration is committed from its event loop. Wait until each monitor
+# reports the scale we asked for (max 0.5s each) so a caller gating on this
+# script never proceeds while the old scale is still in effect.
+for entry in "${applied[@]+"${applied[@]}"}"; do
+    if [ -z "$entry" ]; then
+        continue
+    fi
+    name="${entry%%:*}"
+    want="${entry##*:}"
+    for attempt in $(seq 1 10); do
+        have=$(hyprctl monitors -j 2>/dev/null | jq -r --arg n "$name" '[.[] | select(.name == $n) | .scale][0] // empty' 2>/dev/null || true)
+        if [ -n "$have" ] && awk -v a="$have" -v b="$want" 'BEGIN { exit !(a > b - 0.01 && a < b + 0.01) }'; then
+            break
+        fi
+        sleep 0.05
+    done
 done
 
 log "done"

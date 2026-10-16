@@ -14,7 +14,12 @@ local terminal    = "kitty"
 
 hl.on("hyprland.start", function ()
      hl.exec_cmd("hyprpaper")
-     hl.exec_cmd("/usr/local/bin/aelum-installer")
+     -- Scale the monitor BEFORE the installer maps its window. The installer is
+     -- a floating window that Hyprland centers, so it must be created after the
+     -- final scale is in effect: mapping it at scale 1.0 and rescaling the
+     -- output afterwards leaves the window at its pre-scale logical position,
+     -- pinned near the bottom-right corner (visible on 1440p/4K displays).
+     hl.exec_cmd("/bin/sh -c '/usr/local/bin/auto-scale-monitor.sh; exec /usr/local/bin/aelum-installer'")
 end)
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----
