@@ -95,6 +95,13 @@ Because every package is included, **installation takes about 1 minute**, and th
   timer cannot know when boot ends, the installer also drops
   `aelum-boot-progress.service` into the target; like the live ISO's unit it
   sends `boot:complete` just before plymouth-quit, pushing the bar to 100%.
+  On an **encrypted** install the bar is additionally gated on the passphrase:
+  the installer's `aelum-luks-hint` initramfs hook sends `luks:locked` right
+  after the splash appears (the bar is held back) and `luks:unlocked` when the
+  root volume opens (the bar starts). A rejected passphrase therefore never
+  shows boot progress; it shows systemd's own per-volume prompt plus a retry
+  message, and the machine powers off once the tries are exhausted. See
+  `installer/backend/install/configure/luks_hint.go`.
 - **Live ISO** — the bar follows real events. `usr/lib/initcpio/hooks/aelum-live`
   sends `plymouth update --status=live[:STAGE]` for every stage it sees in
   `/proc/mounts` while archiso mounts, and pings `switchroot` immediately before

@@ -19,6 +19,12 @@
 #      plymouth update --status=boot:complete   (installed system)
 #      These arrive milliseconds before plymouth-quit dismisses the splash, so
 #      neither mode has to guess the boot duration to finish the bar.
+#  - Encrypted installed system: the bar is gated on the passphrase. The
+#      initramfs sends "luks:locked" (a prompt is imminent) and "luks:unlocked"
+#      (the root volume was opened). The bar stays hidden until luks:unlocked,
+#      so a rejected passphrase never shows boot progress. Senders: the
+#      installer's aelum-luks-hint units (see backend/install/configure/
+#      luks_hint.go).
 
 # Dark mauve-tinted background
 Window.SetBackgroundTopColor(0.071, 0.055, 0.063);
@@ -56,6 +62,23 @@ global.bullets = [];
 global.now = 0.0;
 global.fake_start_time = 0.0;
 
+# LUKS unlock gating (installed system). On an encrypted boot the bar must not
+# advance until a passphrase is accepted:
+#  - luks_expected is set the moment a prompt is imminent, either by the
+#      initramfs (plymouth update --status=luks:locked, sent right after the
+#      splash appears) or by display_password_callback as a fallback.
+#  - root_unlocked flips on when the root volume opens
+#      (plymouth update --status=luks:unlocked); only then does the fake timer
+#      start. Between a rejected passphrase and the retry, Plymouth calls
+#      display_normal_callback with no request pending, and this gate keeps the
+#      bar hidden so a wrong passphrase never shows boot progress.
+# On an unencrypted boot neither status arrives and the bar behaves as before.
+global.luks_expected = 0;
+global.root_unlocked = 0;
+
+# Rendered height of the passphrase prompt, so the error message below clears it.
+global.prompt_height = 0;
+
 # Installed-system timing (seconds). Tune so the bar fills as Plymouth quits.
 global.post_unlock_duration = 2.0;   # Enter on LUKS -> greeter
 global.cold_boot_duration = 7.0;     # boot without a LUKS prompt
@@ -77,6 +100,12 @@ lock.sprite.SetOpacity(0);
 
 entry.sprite = Sprite(entry.image);
 entry.sprite.SetOpacity(0);
+
+# The passphrase prompt text, below the entry field. Plymouth passes systemd's
+# own per-volume message to display_password_callback (e.g. "Please enter
+# passphrase for disk aelum:"), so this follows whichever volume is unlocking.
+prompt_sprite = Sprite();
+prompt_sprite.SetOpacity(0);
 
 #----------------------------------------- Helpers --------------------------------
 
@@ -290,6 +319,7 @@ fun hide_password_dialog()
 {
   lock.sprite.SetOpacity(0);
   entry.sprite.SetOpacity(0);
+  prompt_sprite.SetOpacity(0);
   for (index = 0; global.bullets[index]; index++)
   {
     global.bullets[index].SetOpacity(0);
@@ -300,6 +330,18 @@ fun hide_password_dialog()
 fun display_normal_callback()
 {
   hide_password_dialog();
+
+  # Plymouth shows "normal" whenever no password request is pending, including
+  # in the gap right after a *rejected* passphrase while systemd-cryptsetup
+  # prepares its retry. On an encrypted boot the bar must stay hidden until the
+  # root volume actually unlocks (luks:unlocked), so a wrong passphrase never
+  # flashes boot progress.
+  if (global.luks_expected == 1 && global.root_unlocked == 0)
+  {
+    hide_progress_bar();
+    stop_fake_progress();
+    return;
+  }
 
   # Plymouth.GetMode() reports "boot" for a normal (and a resume) boot; the
   # remaining values are the update modes the splash can be shown in.
@@ -319,12 +361,24 @@ fun display_normal_callback()
 fun display_password_callback(prompt, bullets)
 {
   global.password_shown = 1;
+  global.luks_expected = 1;
 
   # Hide the progress bar and pause the fake timer while waiting for input
   hide_progress_bar();
   stop_fake_progress();
 
   show_password_dialog();
+
+  # Render systemd's own prompt for the volume being unlocked. Plymouth hands us
+  # the exact string it was asked for, so this names the right volume without
+  # the theme having to know anything about disks.
+  prompt_image = Image.Text(prompt, 0.95, 0.93, 0.95);
+  prompt_sprite.SetImage(prompt_image);
+  prompt_sprite.SetOpacity(1);
+  prompt_sprite.SetPosition(Window.GetX() + (Window.GetWidth() - prompt_image.GetWidth()) / 2,
+                            entry.y + entry.image.GetHeight() + 14,
+                            10001);
+  global.prompt_height = prompt_image.GetHeight();
 
   # Clear old bullets
   for (index = 0; global.bullets[index]; index++)
@@ -392,6 +446,28 @@ fun status_callback(status)
     # plymouth-quit, so the bar lands on 100% before the greeter appears.
     finish_progress();
   }
+  if (status == "luks:locked")
+  {
+    # Sent from the initramfs right after the splash appears when the root is
+    # encrypted. A passphrase prompt is imminent, so hold the boot bar back
+    # until the root volume unlocks (this also cancels the brief bar the
+    # boot-start display_normal may have shown).
+    global.luks_expected = 1;
+    global.root_unlocked = 0;
+    hide_progress_bar();
+    stop_fake_progress();
+  }
+  if (status == "luks:unlocked")
+  {
+    # The root volume opened with a correct passphrase -- the first point at
+    # which the installed system may show boot progress. Start the timed bar
+    # here rather than after the submission, so it is tied to the unlock.
+    global.root_unlocked = 1;
+    hide_password_dialog();
+    hide_message_callback("");
+    show_progress_bar();
+    start_fake_progress();
+  }
 }
 
 Plymouth.SetUpdateStatusFunction(status_callback);
@@ -426,7 +502,14 @@ fun display_message_callback(text)
   message_sprite.SetImage(img);
   message_sprite.SetOpacity(0.9);
   message_sprite.SetX(Window.GetX() + (Window.GetWidth() - img.GetWidth()) / 2);
-  message_sprite.SetY(Window.GetY() + Window.GetHeight() - img.GetHeight() - 12);
+  # Under the passphrase prompt, which sits under the entry field. The progress
+  # bar is hidden while a prompt is up, so that space is free.
+  y = entry.y + entry.image.GetHeight() + 14;
+  if (global.prompt_height > 0)
+  {
+    y = y + global.prompt_height + 12;
+  }
+  message_sprite.SetY(y);
 }
 
 fun hide_message_callback(text)
