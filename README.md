@@ -12,9 +12,9 @@ The install itself needs no internet. Every package is cached locally in an embe
 
 - **Offline install** — every package needed to install is embedded in the ISO, so the install doesn't touch the network. (Once installed, your system works like any Arch install and uses the internet normally.)
 - **Auto-launching installer** — on first boot, greetd starts a barebones Hyprland that opens the installer by itself
-- **Silent boot** — clean UEFI splash with the Plymouth BGRT theme (your OEM logo), no console spam
+- **Silent boot** — clean branded Aelum Plymouth splash (with passphrase unlock on encrypted installs), no console spam
 - **Auto monitor scaling** — detects the connected monitor and applies the right Hyprland scale automatically, so the installer reads crisply at 1080p, 1440p, or 4K
-- **Quick install** — since every package is included, install takes about a minute and the finished OS uses roughly 4.7 GB
+- **Quick install** — since every package is included, install takes about a minute and the finished OS uses roughly 3.2 GB on btrfs (with compression) or 4.7 GB on ext4
 
 ## What you install
 
@@ -23,7 +23,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 - **Hyprland** dynamic tiling with DankMaterialShell (Quickshell-based) for a clean, modern look
 - **DMS greeter** (greetd) — a fast login screen
 - **matugen** — generates matching color schemes from your wallpaper automatically
-- **Kitty**, **Firefox** (with **uBlock Origin** pre-installed), **PipeWire** audio, and a silent **Plymouth BGRT** boot splash
+- **Kitty**, **Firefox** (with **uBlock Origin** pre-installed), **PipeWire** audio, and a branded **Aelum** Plymouth boot splash (with LUKS passphrase unlock)
 - **GTK + Qt apps get matugen-themed automatically**. In Qt apps, just pick the built-in matugen theme and it matches the rest of the system
 - **zram** compressed swap — fast, and no disk space reserved for a swap file
 
@@ -31,7 +31,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 
 - **Installs without a network.** No chasing slow or missing mirrors during install — everything is baked into the ISO. Handy on a machine that has no internet at install time. (After install you can connect normally.)
 - **A finished desktop, not a blank slate.** You get a curated Hyprland + DMS setup with automatic theming, so it looks reasonable straight after install.
-- **Quiet boot.** Silent boot with your OEM logo, auto monitor scaling, and zram instead of a swap file.
+- **Quiet boot.** Silent, branded boot splash, auto monitor scaling, and zram instead of a swap file.
 - **Nothing extra.** The live ISO exists to launch the installer, so there's little to configure or clean up.
 
 ---
@@ -82,7 +82,7 @@ This repo only holds the profile content that goes into the ISO. See the [docker
 
 All packages needed for the install are cached in `airootfs/var/cache/aelum/offline-mirror/` and served via a `file://` URL in the ISO's pacman.conf, so the install doesn't reach the network. This applies to installation only — the installed system is a regular Arch install and uses the internet for updates and anything else you add.
 
-Because every package is included, **installation takes about 1 minute**, and the **complete OS requires roughly 4.7 GB of disk space** after install.
+Because every package is included, **installation takes about 1 minute**, and the **complete OS requires roughly 3.2 GB of disk space on btrfs (with compression) or 4.7 GB on ext4** after install.
 
 ---
 
