@@ -1,0 +1,13 @@
+# Live ISO only: start the session dark so the installer's GTK window never
+# flashes the light Adwaita background before its web content paints.
+#
+# color-scheme also drives the settings portal's org.freedesktop.appearance
+# value, which is what WebKitGTK reads for `prefers-color-scheme`. GTK3 (the
+# installer window) does not consume gtk-theme without an XSettings daemon, so
+# hyprland.lua additionally exports GTK_THEME=adw-gtk3-dark.
+#
+# This file is not copied to the installed system (SetupUsers copies only
+# 01-icons and 02-nautilus-terminal); the installed desktop is themed by DMS.
+[org/gnome/desktop/interface]
+gtk-theme='adw-gtk3-dark'
+color-scheme='prefer-dark'

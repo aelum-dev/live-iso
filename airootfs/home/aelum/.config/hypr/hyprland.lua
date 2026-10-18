@@ -31,6 +31,13 @@ end)
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
+-- Start GTK apps dark. The installer is a WebKitGTK/GTK3 window, and GTK3
+-- resolves its theme from GTK_THEME and settings.ini — not from the
+-- org.gnome.desktop.interface gsettings key, which needs an XSettings daemon
+-- the live session does not run. Without this the window paints Adwaita light
+-- for its first frame, before the web content appears.
+hl.env("GTK_THEME", "adw-gtk3-dark")
+
 -----------------------
 ---- LOOK AND FEEL ----
 -----------------------
