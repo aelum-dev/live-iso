@@ -26,9 +26,9 @@
 #      installer's aelum-luks-hint units (see backend/install/configure/
 #      luks_hint.go).
 
-# Dark mauve-tinted background
-Window.SetBackgroundTopColor(0.071, 0.055, 0.063);
-Window.SetBackgroundBottomColor(0.043, 0.035, 0.039);
+# DMS dark background (surface → surface-container-lowest)
+Window.SetBackgroundTopColor(0.078431, 0.070588, 0.094118);
+Window.SetBackgroundBottomColor(0.058824, 0.050980, 0.074510);
 
 #----------------------------------------- Assets --------------------------------
 
@@ -372,7 +372,7 @@ fun display_password_callback(prompt, bullets)
   # Render systemd's own prompt for the volume being unlocked. Plymouth hands us
   # the exact string it was asked for, so this names the right volume without
   # the theme having to know anything about disks.
-  prompt_image = Image.Text(prompt, 0.95, 0.93, 0.95);
+  prompt_image = Image.Text(prompt, 0.901961, 0.878431, 0.913725);
   prompt_sprite.SetImage(prompt_image);
   prompt_sprite.SetOpacity(1);
   prompt_sprite.SetPosition(Window.GetX() + (Window.GetWidth() - prompt_image.GetWidth()) / 2,
