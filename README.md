@@ -137,6 +137,26 @@ after plymouth's. Both halves of the hook are declared in `profiledef.sh` with m
 
 ---
 
+## GPU Support (Early KMS)
+
+The live initramfs carries the kernel's DRM/KMS drivers, so the panel switches
+to its native GPU mode before `plymouth` and the desktop start (no low-res
+`simpledrm` hand-off, no mode-set flicker). This is done with the `kms` hook in
+`airootfs/etc/mkinitcpio.conf.d/archiso.conf`:
+
+- **AMD** — `amdgpu`, `radeon`
+- **Intel** — `i915`, `xe`
+- **NVIDIA** — `nouveau` (the ISO ships no proprietary driver)
+- **VMs** — `virtio_gpu`, `vmwgfx`, and the other DRM drivers
+
+The live ISO intentionally has no `autodetect` hook, so the image must boot on
+any machine: `kms` includes every DRM module, and `udev` loads only the one
+matching the detected hardware. The installed system uses `autodetect` + `kms`
+(see the installer's `configureInitramfs`), so its initramfs is trimmed to the
+machine it was installed on.
+
+---
+
 ## License
 
 Released under the [GNU General Public License v3.0 (GPL-3.0)](https://www.gnu.org/licenses/gpl-3.0.html). See the `LICENSE` file for the full text.
