@@ -2,7 +2,7 @@
 
 ![Aelum](images/hero-light.png)
 
-Aelum is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [Aelum Installer](https://gitlab.com/aelum/installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more.
+Aelum is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [Aelum Installer](https://github.com/aelum-dev/installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more.
 
 The install itself needs no internet. Every package is cached locally in an embedded repository, so it's completely air-gapped: boot it on any machine, the installer starts on its own, and you don't need a network connection to install it. Once installed, it's a normal Arch system — use the internet, update packages, install whatever you like.
 
@@ -38,7 +38,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 
 ## Project Structure
 
-This repo is the **Aelum profile** — the content that goes into the ISO. The build pipeline that turns it into an ISO now lives in a separate repo: [aelum/docker](https://gitlab.com/aelum/docker). See [Building & Running](#building--running) below.
+This repo is the **Aelum profile** — the content that goes into the ISO. The build pipeline that turns it into an ISO now lives in a separate repo: [aelum/docker](https://github.com/aelum-dev/docker). See [Building & Running](#building--running) below.
 
 ```
 .
@@ -72,9 +72,9 @@ This repo is the **Aelum profile** — the content that goes into the ISO. The b
 
 ## Building & Running
 
-All building (ISO creation) and running (QEMU testing) of Aelum are done in the [aelum/docker](https://gitlab.com/aelum/docker) repo — not here. Firefox ships with **uBlock Origin** automatically installed on first boot (when online). This is done with a Mozilla distribution policy in `airootfs/usr/lib/firefox/distribution/policies.json`, which force-installs the add-on from [addons.mozilla.org](https://addons.mozilla.org) using its add-on ID (`uBlock0@raymondhill.net`). No add-on file is bundled in the ISO — Firefox downloads it on first launch. See Mozilla's [Deploy Firefox with extensions](https://support.mozilla.org/en-US/kb/deploying-firefox-with-extensions) docs for how this works.
+All building (ISO creation) and running (QEMU testing) of Aelum are done in the [aelum/docker](https://github.com/aelum-dev/docker) repo — not here. Firefox ships with **uBlock Origin** automatically installed on first boot (when online). This is done with a Mozilla distribution policy in `airootfs/usr/lib/firefox/distribution/policies.json`, which force-installs the add-on from [addons.mozilla.org](https://addons.mozilla.org) using its add-on ID (`uBlock0@raymondhill.net`). No add-on file is bundled in the ISO — Firefox downloads it on first launch. See Mozilla's [Deploy Firefox with extensions](https://support.mozilla.org/en-US/kb/deploying-firefox-with-extensions) docs for how this works.
 
-This repo only holds the profile content that goes into the ISO. See the [docker repo README](https://gitlab.com/aelum/docker) for build and run instructions.
+This repo only holds the profile content that goes into the ISO. See the [docker repo README](https://github.com/aelum-dev/docker) for build and run instructions.
 
 ---
 
