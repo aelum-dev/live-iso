@@ -86,6 +86,23 @@ Because every package is included, **installation takes about 1 minute**, and th
 
 ---
 
+## Networking & DNS
+
+The live ISO uses `systemd-networkd` + `systemd-resolved` (both enabled in
+`airootfs/etc/systemd/system/multi-user.target.wants/`). `airootfs/etc/resolv.conf`
+**must** be the symlink to `/run/systemd/resolve/stub-resolv.conf` (copied from
+the upstream archiso profile), not a regular file.
+
+This matters because not every program resolves names through glibc's NSS
+stack: GnuPG's `dirmngr` (and other tools that call `res_query` directly) reads
+`/etc/resolv.conf` itself. With a comment-only file — which is what the
+`filesystem` package ships when the profile omits the symlink — `getent` and
+`curl` still work via `nss-resolve`, but `dirmngr` has no nameserver and fails
+with `error retrieving ... via WKD: Server indicated a failure`. Keeping the
+symlink makes WKD, `dig`, and every other direct `resolv.conf` consumer work.
+
+---
+
 ## Boot Splash Progress (Plymouth)
 
 `airootfs/usr/share/plymouth/themes/aelum/aelum.script` has two progress modes:
