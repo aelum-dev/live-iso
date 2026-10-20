@@ -41,6 +41,13 @@ lsof
 vim
 nano
 
+# Bootloader
+# refind is installed into the target system (the installer copies its EFI
+# binary and icons onto the Boot partition); efibootmgr lets the installer
+# register rEFInd in the firmware's boot order.
+refind
+efibootmgr
+
 # Network
 networkmanager
 iwd
