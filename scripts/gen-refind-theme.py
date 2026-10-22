@@ -13,18 +13,21 @@ Outputs (airootfs/usr/share/aelum/refind/themes/aelum/):
     font-2x.png         rEFInd font at 2x: 96 glyphs, 26x56 cells
     selection_big.png   288x288 selected-icon highlight
     selection_small.png 128x128 selected-tool highlight
-    icons/os_arch.png   256x256 Aelum mark used by Aelum's own menu entries
-    icons/os_linux.png  Tux, for generic Linux/GRUB loaders
-    icons/os_win*.png   Windows logo
-    icons/os_systemd.png, os_gummiboot.png
-                        Arch logo, for Arch's systemd-boot
-    icons/os_ventoy.png, os_vtoyefi.png
-                        USB-stick glyph, for Ventoy volumes
+    icons/os_*.png      256x256 cream-tile OS icons; os_arch.png is the Aelum mark
+    icons/func_*.png,   96x96 light glyphs for the tools row
+    icons/tool_*.png
+    icons/vol_*.png     64x64 plum badges
+    icons/arrow_*.png,  light glyphs for menu arrows, mouse, and boot logos
+    icons/mouse.png
+    icons/boot_*.png
+    icons/transparent.png
+                        fully transparent spacer icon
 
-The non-Aelum icons are Nerd Font glyphs (looked up with
-website/scripts/icons.py) drawn on the same cream tile as the Aelum mark.
-They make rEFInd's auto-detected entries visually distinct instead of all
-falling back to the same os_linux.png tile.
+Every icon in rEFInd's stock icons/ directory is overridden here, so the boot
+menu never falls back to the stock artwork. OS icons use a Nerd Font glyph
+(looked up with website/scripts/icons.py) on the same cream tile as the Aelum
+mark; small tools/functions and the arrow/mouse/boot logos are light glyphs on
+transparency; volume badges are cream glyphs in a plum circle.
 
 The Nerd Font Symbols source is shared with the website. If the two repos are
 not checked out side by side, point AELUM_NERD_FONT at the TTF:
@@ -70,10 +73,151 @@ NERD_FONT_DEFAULT = ROOT.parent / "website/scripts/SymbolsNerdFont-Regular.ttf"
 # Nerd Font Symbols codepoints. Look glyphs up with:
 #     python3 website/scripts/icons.py find <keyword>
 GLYPHS = {
-    "arch": 0xF303,      # linux-archlinux
-    "windows": 0xF05B3,  # md-microsoft_windows
-    "linux": 0xF31A,     # linux-tux
-    "usb": 0xF129E,      # md-usb_flash_drive
+    # OS / distro logos
+    "arch": 0xF303,          # linux-archlinux
+    "ubuntu": 0xF31B,        # linux-ubuntu
+    "debian": 0xF306,        # linux-debian
+    "fedora": 0xF30A,        # linux-fedora
+    "centos": 0xF304,        # linux-centos
+    "gentoo": 0xF30D,        # linux-gentoo
+    "manjaro": 0xF312,       # linux-manjaro
+    "opensuse": 0xF314,      # linux-opensuse
+    "redhat": 0xF316,        # linux-redhat
+    "slackware": 0xF318,     # linux-slackware
+    "void": 0xF32E,          # linux-void
+    "linuxmint": 0xF30E,     # linux-linuxmint
+    "elementary": 0xF309,    # linux-elementary
+    "endeavour": 0xF322,     # linux-endeavour
+    "freebsd": 0xF30C,       # linux-freebsd
+    "apple": 0xF179,         # fa-apple
+    "chrome": 0xF02AF,       # md-google_chrome
+    "clover": 0xF0816,       # md-clover
+    "leaf": 0xF032A,         # md-leaf (Haiku)
+    "flag": 0xF023B,         # md-flag (NetBSD)
+    "linux": 0xF31A,         # linux-tux
+    "windows": 0xF05B3,      # md-microsoft_windows
+    "usb": 0xF129E,          # md-usb_flash_drive
+    # UI / tools
+    "info": 0xF02FC,         # md-information
+    "list_numbered": 0xF027B,  # md-format_list_numbered
+    "lock_reset": 0xF0773,   # md-lock_reset
+    "exit": 0xF0206,         # md-exit_to_app
+    "chip": 0xF061A,         # md-chip
+    "eye_off": 0xF0209,      # md-eye_off
+    "download": 0xF01DA,     # md-download
+    "restart": 0xF0709,      # md-restart
+    "power": 0xF0425,        # md-power
+    "terminal": 0xF018D,     # md-console
+    "harddisk": 0xF02CA,     # md-harddisk
+    "harddisk_plus": 0xF104B,  # md-harddisk_plus
+    "lifebuoy": 0xF087E,     # md-lifebuoy
+    "memory": 0xF035B,       # md-memory
+    "key": 0xF0306,          # md-key
+    "network": 0xF06F3,      # md-network
+    "shield": 0xF0498,       # md-shield
+    "disc": 0xF05EE,         # md-disc
+    "earth": 0xF01E7,        # md-earth
+    "compass": 0xF018B,      # md-compass
+    "help": 0xF02D6,         # md-help
+    "floppy": 0xF0249,       # md-floppy
+    "arrow_left": 0xF004D,   # md-arrow_left
+    "arrow_right": 0xF0054,  # md-arrow_right
+    "cursor": 0xF01C0,       # md-cursor_default
+}
+
+# rEFInd's stock OS icon names. os_arch is handled separately because it keeps
+# the Aelum mark; every other stock name gets a themed glyph.
+OS_ICONS = {
+    "os_artful": "ubuntu",
+    "os_bionic": "ubuntu",
+    "os_centos": "centos",
+    "os_chakra": "arch",
+    "os_chrome": "chrome",
+    "os_clover": "clover",
+    "os_crunchbang": "terminal",
+    "os_debian": "debian",
+    "os_devuan": "debian",
+    "os_elementary": "elementary",
+    "os_endeavouros": "endeavour",
+    "os_fedora": "fedora",
+    "os_freebsd": "freebsd",
+    "os_frugalware": "linux",
+    "os_gentoo": "gentoo",
+    "os_gummiboot": "arch",
+    "os_haiku": "leaf",
+    "os_hwtest": "memory",
+    "os_kubuntu": "ubuntu",
+    "os_legacy": "floppy",
+    "os_linux": "linux",
+    "os_linuxmint": "linuxmint",
+    "os_lubuntu": "ubuntu",
+    "os_mac": "apple",
+    "os_mageia": "linux",
+    "os_mandriva": "linux",
+    "os_manjaro": "manjaro",
+    "os_netbsd": "flag",
+    "os_network": "earth",
+    "os_opensuse": "opensuse",
+    "os_redhat": "redhat",
+    "os_refind": "compass",
+    "os_refit": "compass",
+    "os_slackware": "slackware",
+    "os_suse": "opensuse",
+    "os_systemd": "arch",
+    "os_trusty": "ubuntu",
+    "os_ubuntu": "ubuntu",
+    "os_uefi": "chip",
+    "os_unknown": "help",
+    "os_void": "void",
+    "os_win": "windows",
+    "os_win8": "windows",
+    "os_xenial": "ubuntu",
+    "os_xubuntu": "ubuntu",
+    "os_zesty": "ubuntu",
+    # Theme-only names for Ventoy volumes (not in rEFInd's stock set).
+    "os_ventoy": "usb",
+    "os_vtoyefi": "usb",
+}
+
+# Small tools-row icons, drawn as light glyphs on transparency.
+SMALL_ICONS = {
+    "func_about": "info",
+    "func_bootorder": "list_numbered",
+    "func_csr_rotate": "lock_reset",
+    "func_exit": "exit",
+    "func_firmware": "chip",
+    "func_hidden": "eye_off",
+    "func_install": "download",
+    "func_reset": "restart",
+    "func_shutdown": "power",
+    "tool_apple_rescue": "apple",
+    "tool_fwupdate": "chip",
+    "tool_memtest": "memory",
+    "tool_mok_tool": "key",
+    "tool_netboot": "network",
+    "tool_part": "harddisk_plus",
+    "tool_rescue": "lifebuoy",
+    "tool_shell": "terminal",
+    "tool_windows_rescue": "windows",
+}
+
+# Volume badges, drawn as cream glyphs in a plum circle.
+VOLUME_ICONS = {
+    "vol_efi": "shield",
+    "vol_external": "usb",
+    "vol_internal": "harddisk",
+    "vol_net": "network",
+    "vol_optical": "disc",
+}
+
+# (glyph key, base size, scale): arrows and mouse match rEFInd's native sizes;
+# boot logos are drawn at the big-icon size.
+PLAIN_ICONS = {
+    "arrow_left": ("arrow_left", 48, 2),
+    "arrow_right": ("arrow_right", 48, 2),
+    "mouse": ("cursor", 16, 2),
+    "boot_linux": ("linux", 128, 2),
+    "boot_win": ("windows", 128, 2),
 }
 
 # Brand palette (shared with website/src/styles/base.css and the Plymouth theme).
@@ -307,14 +451,22 @@ def make_icon(base_size: int = 128, scale: int = 1) -> Image.Image:
     return tile
 
 
-def make_glyph_icon(codepoint: int, base_size: int = 128, scale: int = 1) -> Image.Image:
-    """Nerd Font glyph on the shared cream tile, centred and fitted."""
-    size = base_size * scale
-    tile = make_tile(base_size, scale)
-    draw = ImageDraw.Draw(tile)
+def glyph_layer(
+    codepoint: int,
+    size: int,
+    color: tuple[int, int, int],
+    box_ratio: float,
+) -> Image.Image:
+    """Render a centred Nerd Font glyph on a transparent canvas.
+
+    The glyph is fitted to size * box_ratio in both axes. Logo glyphs with
+    generous side bearings are shrunk to fit rather than clipped.
+    """
+    layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
     glyph = chr(codepoint)
     font_path = str(nerd_font_path())
-    box = round(size * 0.58)
+    box = max(1, round(size * box_ratio))
     font = ImageFont.truetype(font_path, box)
     bbox = draw.textbbox((0, 0), glyph, font=font)
     glyph_w, glyph_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
@@ -325,8 +477,43 @@ def make_glyph_icon(codepoint: int, base_size: int = 128, scale: int = 1) -> Ima
         glyph_w, glyph_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
     x = (size - glyph_w) // 2 - bbox[0]
     y = (size - glyph_h) // 2 - bbox[1]
-    draw.text((x, y), glyph, font=font, fill=(*ACCENT, 255))
+    draw.text((x, y), glyph, font=font, fill=(*color, 255))
+    return layer
+
+
+def make_glyph_icon(codepoint: int, base_size: int = 128, scale: int = 1) -> Image.Image:
+    """Nerd Font glyph on the shared cream tile, centred and fitted."""
+    size = base_size * scale
+    tile = make_tile(base_size, scale)
+    tile.alpha_composite(glyph_layer(codepoint, size, ACCENT, 0.58))
     return tile
+
+
+def make_plain_glyph(
+    codepoint: int,
+    base_size: int = 48,
+    scale: int = 2,
+    color: tuple[int, int, int] = TEXT,
+    box_ratio: float = 0.78,
+) -> Image.Image:
+    """Light glyph on transparency for the tools row, arrows, mouse, and boot logos."""
+    return glyph_layer(codepoint, base_size * scale, color, box_ratio)
+
+
+def make_badge(codepoint: int, base_size: int = 32, scale: int = 2) -> Image.Image:
+    """Plum circular volume badge with a cream glyph."""
+    size = base_size * scale
+    badge = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+
+    big = size * SCALE
+    mask = Image.new("L", (big, big), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, big - 1, big - 1), fill=255)
+    mask = mask.resize((size, size), Image.Resampling.LANCZOS)
+    disk = Image.new("RGBA", (size, size), (*ACCENT, 255))
+    disk.putalpha(mask)
+    badge.alpha_composite(disk)
+    badge.alpha_composite(glyph_layer(codepoint, size, CREAM_TOP, 0.58))
+    return badge
 
 
 def make_font(scale: int = 1) -> Image.Image:
@@ -363,7 +550,7 @@ def main() -> None:
     parser.add_argument(
         "--icons-only",
         action="store_true",
-        help="Regenerate only the OS icons (useful while iterating on the icon set).",
+        help="Regenerate only the theme icons (skip background, fonts, and selections).",
     )
     args = parser.parse_args()
     ICON_DIR.mkdir(parents=True, exist_ok=True)
@@ -379,15 +566,18 @@ def main() -> None:
         make_font(2).save(THEME_DIR / "font-2x.png", optimize=True)
 
     # Aelum's own menu fragments point at os_arch.png, so it keeps the brand
-    # mark. Everything rEFInd auto-detects gets a glyph on the same tile.
+    # mark. Every other stock rEFInd icon name gets a themed replacement, so
+    # the menu never falls back to rEFInd's stock artwork.
     make_icon(128, 2).save(ICON_DIR / "os_arch.png", optimize=True)
-    make_glyph_icon(GLYPHS["linux"], 128, 2).save(ICON_DIR / "os_linux.png", optimize=True)
-    for name in ("os_win.png", "os_win8.png"):
-        make_glyph_icon(GLYPHS["windows"], 128, 2).save(ICON_DIR / name, optimize=True)
-    for name in ("os_systemd.png", "os_gummiboot.png"):
-        make_glyph_icon(GLYPHS["arch"], 128, 2).save(ICON_DIR / name, optimize=True)
-    for name in ("os_ventoy.png", "os_vtoyefi.png"):
-        make_glyph_icon(GLYPHS["usb"], 128, 2).save(ICON_DIR / name, optimize=True)
+    for name, key in OS_ICONS.items():
+        make_glyph_icon(GLYPHS[key], 128, 2).save(ICON_DIR / f"{name}.png", optimize=True)
+    for name, key in SMALL_ICONS.items():
+        make_plain_glyph(GLYPHS[key], 48, 2).save(ICON_DIR / f"{name}.png", optimize=True)
+    for name, key in VOLUME_ICONS.items():
+        make_badge(GLYPHS[key], 32, 2).save(ICON_DIR / f"{name}.png", optimize=True)
+    for name, (key, base_size, scale) in PLAIN_ICONS.items():
+        make_plain_glyph(GLYPHS[key], base_size, scale).save(ICON_DIR / f"{name}.png", optimize=True)
+    Image.new("RGBA", (32, 32), (0, 0, 0, 0)).save(ICON_DIR / "transparent.png", optimize=True)
 
     for path in sorted(THEME_DIR.rglob("*.png")):
         with Image.open(path) as img:
