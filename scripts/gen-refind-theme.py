@@ -13,7 +13,24 @@ Outputs (airootfs/usr/share/aelum/refind/themes/aelum/):
     font-2x.png         rEFInd font at 2x: 96 glyphs, 26x56 cells
     selection_big.png   288x288 selected-icon highlight
     selection_small.png 128x128 selected-tool highlight
-    icons/os_arch.png   256x256 Aelum icon (also os_linux.png)
+    icons/os_arch.png   256x256 Aelum mark used by Aelum's own menu entries
+    icons/os_linux.png  Tux, for generic Linux/GRUB loaders
+    icons/os_win*.png   Windows logo
+    icons/os_systemd.png, os_gummiboot.png
+                        Arch logo, for Arch's systemd-boot
+    icons/os_ventoy.png, os_vtoyefi.png
+                        USB-stick glyph, for Ventoy volumes
+
+The non-Aelum icons are Nerd Font glyphs (looked up with
+website/scripts/icons.py) drawn on the same cream tile as the Aelum mark.
+They make rEFInd's auto-detected entries visually distinct instead of all
+falling back to the same os_linux.png tile.
+
+The Nerd Font Symbols source is shared with the website. If the two repos are
+not checked out side by side, point AELUM_NERD_FONT at the TTF:
+
+    AELUM_NERD_FONT=/path/to/SymbolsNerdFont-Regular.ttf \
+        python3 scripts/gen-refind-theme.py --icons-only
 
 rEFInd doubles icon sizes at screen widths >= 1921 (HIDPI_MIN), so these
 assets are generated at 2x: the icons are native on 2K/4K and downscaled on
@@ -34,6 +51,8 @@ the website/installer wordmark).
 
 from __future__ import annotations
 
+import argparse
+import os
 import subprocess
 from pathlib import Path
 
@@ -44,6 +63,18 @@ ROOT = Path(__file__).resolve().parent.parent
 THEME_DIR = ROOT / "airootfs/usr/share/aelum/refind/themes/aelum"
 ICON_DIR = THEME_DIR / "icons"
 LOGO_PATH = ROOT / "airootfs/usr/share/plymouth/themes/aelum/logo.png"
+# Shared with website/scripts/icons.py. The generated PNGs are committed, so
+# only developers regenerating the theme need the full source font.
+NERD_FONT_DEFAULT = ROOT.parent / "website/scripts/SymbolsNerdFont-Regular.ttf"
+
+# Nerd Font Symbols codepoints. Look glyphs up with:
+#     python3 website/scripts/icons.py find <keyword>
+GLYPHS = {
+    "arch": 0xF303,      # linux-archlinux
+    "windows": 0xF05B3,  # md-microsoft_windows
+    "linux": 0xF31A,     # linux-tux
+    "usb": 0xF129E,      # md-usb_flash_drive
+}
 
 # Brand palette (shared with website/src/styles/base.css and the Plymouth theme).
 ACCENT = (0x83, 0x4C, 0x74)  # #834c74 — Aelum plum
@@ -82,6 +113,18 @@ def find_font(*names: str) -> Path:
     if fallback.exists():
         return fallback
     raise SystemExit("no usable bold sans font found (install Nunito or DejaVu)")
+
+
+def nerd_font_path() -> Path:
+    """Return the Nerd Font Symbols TTF used for the OS glyph icons."""
+    override = os.environ.get("AELUM_NERD_FONT")
+    path = Path(override).expanduser() if override else NERD_FONT_DEFAULT
+    if not path.is_file():
+        raise SystemExit(
+            f"Nerd Font Symbols not found at {path}; "
+            "set AELUM_NERD_FONT to SymbolsNerdFont-Regular.ttf"
+        )
+    return path
 
 
 def rounded_mask(size: int, radius: int) -> Image.Image:
@@ -233,8 +276,8 @@ def make_selection(base_size: int, scale: int = 1) -> Image.Image:
     return canvas
 
 
-def make_icon(base_size: int = 128, scale: int = 1) -> Image.Image:
-    """Aelum OS tile, drawn at base_size x scale."""
+def make_tile(base_size: int = 128, scale: int = 1) -> Image.Image:
+    """Cream rounded tile shared by the Aelum mark and the OS glyph icons."""
     size = base_size * scale
     radius = (base_size * 15 // 64) * scale
     border_width = max(2, base_size // 64) * scale
@@ -250,11 +293,39 @@ def make_icon(base_size: int = 128, scale: int = 1) -> Image.Image:
         outline=(*CREAM_BORDER, 255),
         width=border_width,
     )
+    return tile
 
+
+def make_icon(base_size: int = 128, scale: int = 1) -> Image.Image:
+    """Aelum OS tile, drawn at base_size x scale."""
+    size = base_size * scale
+    tile = make_tile(base_size, scale)
     mark = load_mark(round(size * 0.62))
     x = (size - mark.width) // 2
     y = (size - mark.height) // 2 + scale
     tile.alpha_composite(mark, (x, y))
+    return tile
+
+
+def make_glyph_icon(codepoint: int, base_size: int = 128, scale: int = 1) -> Image.Image:
+    """Nerd Font glyph on the shared cream tile, centred and fitted."""
+    size = base_size * scale
+    tile = make_tile(base_size, scale)
+    draw = ImageDraw.Draw(tile)
+    glyph = chr(codepoint)
+    font_path = str(nerd_font_path())
+    box = round(size * 0.58)
+    font = ImageFont.truetype(font_path, box)
+    bbox = draw.textbbox((0, 0), glyph, font=font)
+    glyph_w, glyph_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    if glyph_w > box or glyph_h > box:
+        ratio = min(box / glyph_w, box / glyph_h)
+        font = ImageFont.truetype(font_path, max(1, round(box * ratio)))
+        bbox = draw.textbbox((0, 0), glyph, font=font)
+        glyph_w, glyph_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    x = (size - glyph_w) // 2 - bbox[0]
+    y = (size - glyph_h) // 2 - bbox[1]
+    draw.text((x, y), glyph, font=font, fill=(*ACCENT, 255))
     return tile
 
 
@@ -288,20 +359,35 @@ def make_font(scale: int = 1) -> Image.Image:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate the Aelum rEFInd theme artwork.")
+    parser.add_argument(
+        "--icons-only",
+        action="store_true",
+        help="Regenerate only the OS icons (useful while iterating on the icon set).",
+    )
+    args = parser.parse_args()
     ICON_DIR.mkdir(parents=True, exist_ok=True)
 
-    background = make_background(2)
-    background.save(THEME_DIR / "background.png", optimize=True)
+    if not args.icons_only:
+        background = make_background(2)
+        background.save(THEME_DIR / "background.png", optimize=True)
 
-    make_selection(144, 2).save(THEME_DIR / "selection_big.png", optimize=True)
-    make_selection(64, 2).save(THEME_DIR / "selection_small.png", optimize=True)
+        make_selection(144, 2).save(THEME_DIR / "selection_big.png", optimize=True)
+        make_selection(64, 2).save(THEME_DIR / "selection_small.png", optimize=True)
 
-    icon = make_icon(128, 2)
-    icon.save(ICON_DIR / "os_arch.png", optimize=True)
-    icon.save(ICON_DIR / "os_linux.png", optimize=True)
+        make_font(1).save(THEME_DIR / "font.png", optimize=True)
+        make_font(2).save(THEME_DIR / "font-2x.png", optimize=True)
 
-    make_font(1).save(THEME_DIR / "font.png", optimize=True)
-    make_font(2).save(THEME_DIR / "font-2x.png", optimize=True)
+    # Aelum's own menu fragments point at os_arch.png, so it keeps the brand
+    # mark. Everything rEFInd auto-detects gets a glyph on the same tile.
+    make_icon(128, 2).save(ICON_DIR / "os_arch.png", optimize=True)
+    make_glyph_icon(GLYPHS["linux"], 128, 2).save(ICON_DIR / "os_linux.png", optimize=True)
+    for name in ("os_win.png", "os_win8.png"):
+        make_glyph_icon(GLYPHS["windows"], 128, 2).save(ICON_DIR / name, optimize=True)
+    for name in ("os_systemd.png", "os_gummiboot.png"):
+        make_glyph_icon(GLYPHS["arch"], 128, 2).save(ICON_DIR / name, optimize=True)
+    for name in ("os_ventoy.png", "os_vtoyefi.png"):
+        make_glyph_icon(GLYPHS["usb"], 128, 2).save(ICON_DIR / name, optimize=True)
 
     for path in sorted(THEME_DIR.rglob("*.png")):
         with Image.open(path) as img:
