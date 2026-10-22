@@ -148,6 +148,13 @@ that directory to `EFI/refind/themes/aelum` on the ESP and pulls it in from
 `refind.conf` with `include themes/aelum/theme.conf`, so the boot menu matches
 the Plymouth splash and desktop without any network access.
 
+The `refind.conf` written by the installer is global; each Aelum installation
+writes its own menu fragment to `EFI/refind/aelum/<id>.conf` and adds an
+`include aelum/<id>.conf` line. Kernel and initramfs images are likewise kept
+per install in `aelum/<id>/` on the ESP (bind-mounted at `/boot`), and the
+fragment loads them from there. This lets two Aelum installs share one ESP
+without overwriting each other's boot entry or kernel files.
+
 The theme is a 3840×2160 plum background, JetBrains Mono glyph sheets (1× and
 2×), an Aelum icon (`os_arch.png`; other OS icons fall back to rEFInd's
 defaults), and a rounded selection highlight. Icons and selections are
