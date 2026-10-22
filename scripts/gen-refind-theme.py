@@ -8,7 +8,8 @@ the brand colours, logo, or layout change:
     python3 scripts/gen-refind-theme.py
 
 Outputs (airootfs/usr/share/aelum/refind/themes/aelum/):
-    background.png      3840x2160 branded boot screen (scaled down on 1080p)
+    background.png      3840x2160 live-ISO dark colour + Aelum lockup
+                        (scaled down on 1080p)
     font.png            rEFInd font at 1x: 96 glyphs, 13x28 cells
     font-2x.png         rEFInd font at 2x: 96 glyphs, 26x56 cells
     selection_big.png   288x288 selected-icon highlight
@@ -46,7 +47,10 @@ the text sits on a dark background, which renders the labels white; a white
 sheet would be inverted to black.
 
 The logo source is the Plymouth theme's mark, so the same A is used by the
-boot splash and the boot menu.
+boot splash and the boot menu. The background is the live ISO's dark-mode
+hyprpaper colour from airootfs/usr/share/DankMaterialShell/bg-dark.png
+(solid #141218) with the Aelum lockup at the top, so the boot menu matches the
+live desktop behind the installer.
 
 Requires: Pillow, numpy, and a bold sans font (Nunito is preferred, matching
 the website/installer wordmark).
@@ -66,6 +70,7 @@ ROOT = Path(__file__).resolve().parent.parent
 THEME_DIR = ROOT / "airootfs/usr/share/aelum/refind/themes/aelum"
 ICON_DIR = THEME_DIR / "icons"
 LOGO_PATH = ROOT / "airootfs/usr/share/plymouth/themes/aelum/logo.png"
+BG_DARK_PATH = ROOT / "airootfs/usr/share/DankMaterialShell/bg-dark.png"
 # Shared with website/scripts/icons.py. The generated PNGs are committed, so
 # only developers regenerating the theme need the full source font.
 NERD_FONT_DEFAULT = ROOT.parent / "website/scripts/SymbolsNerdFont-Regular.ttf"
@@ -223,10 +228,6 @@ PLAIN_ICONS = {
 # Brand palette (shared with website/src/styles/base.css and the Plymouth theme).
 ACCENT = (0x83, 0x4C, 0x74)  # #834c74 — Aelum plum
 ACCENT_LIGHT = (0xCE, 0x8E, 0xBA)  # #ce8eba — light plum
-ACCENT_MUTED = (0xB7, 0x7A, 0xA5)  # #b77aa5 — mid plum
-INDIGO = (0x4C, 0x4A, 0x86)  # wallpaper indigo
-BG_TOP = (0x19, 0x13, 0x22)
-BG_BOTTOM = (0x0B, 0x09, 0x10)
 CREAM_TOP = (0xFB, 0xF4, 0xF8)
 CREAM_BOTTOM = (0xEA, 0xDC, 0xE5)
 CREAM_BORDER = (0xC9, 0xA9, 0xBE)
@@ -290,24 +291,6 @@ def vertical_gradient(size: int, color_top: tuple[int, ...], color_bottom: tuple
     return Image.fromarray(arr, "RGBA")
 
 
-def radial_glow(
-    width: int,
-    height: int,
-    center: tuple[float, float],
-    radius: float,
-    color: tuple[int, int, int],
-    peak_alpha: float,
-) -> Image.Image:
-    """Soft round glow, alpha falling off quadratically to the radius."""
-    yy, xx = np.mgrid[0:height, 0:width]
-    dist = np.sqrt((xx - center[0]) ** 2 + (yy - center[1]) ** 2)
-    falloff = np.clip(1.0 - dist / radius, 0.0, 1.0) ** 2
-    layer = np.zeros((height, width, 4), dtype=np.uint8)
-    layer[..., 0], layer[..., 1], layer[..., 2] = color
-    layer[..., 3] = (falloff * peak_alpha * 255).astype(np.uint8)
-    return Image.fromarray(layer, "RGBA")
-
-
 def load_mark(width: int) -> Image.Image:
     mark = Image.open(LOGO_PATH).convert("RGBA")
     height = round(mark.height * width / mark.width)
@@ -316,33 +299,15 @@ def load_mark(width: int) -> Image.Image:
 
 def make_background(scale: int = 2) -> Image.Image:
     width, height = 1920 * scale, 1080 * scale
+    if not BG_DARK_PATH.is_file():
+        raise SystemExit(f"live ISO dark background not found at {BG_DARK_PATH}")
 
-    column = np.linspace(BG_TOP, BG_BOTTOM, height, dtype=np.float32)
-    base = Image.fromarray(
-        np.repeat(column[:, None, :], width, axis=1).astype(np.uint8), "RGB"
-    ).convert("RGBA")
-
-    # Ambient light echoing the desktop wallpaper: plum and pink on the right,
-    # cool indigo top-left. Kept dim so menu text stays legible.
-    base = Image.alpha_composite(base, radial_glow(width, height, (1280 * scale, 760 * scale), 980 * scale, ACCENT, 0.30))
-    base = Image.alpha_composite(base, radial_glow(width, height, (1060 * scale, 700 * scale), 560 * scale, ACCENT_LIGHT, 0.12))
-    base = Image.alpha_composite(base, radial_glow(width, height, (240 * scale, 200 * scale), 820 * scale, INDIGO, 0.18))
-
-    # Vignette: focus the eye on the centred menu.
-    yy, xx = np.mgrid[0:height, 0:width]
-    norm = np.sqrt(((xx - width / 2) / (width / 2)) ** 2 + ((yy - height / 2) / (height / 2)) ** 2)
-    factor = 1.0 - 0.28 * np.clip(norm / 1.42, 0.0, 1.0) ** 2
-    arr = np.asarray(base).astype(np.float32)
-    arr[..., :3] *= factor[..., None]
-    base = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA")
-
-    # Oversized watermark mark behind the menu (rEFInd draws the icon row at
-    # roughly the vertical centre, so keep this faint).
-    mark = load_mark(620 * scale)
-    watermark = mark.copy()
-    alpha = watermark.getchannel("A").point(lambda a: a * 10 // 255)
-    watermark.putalpha(alpha)
-    base.alpha_composite(watermark, (width // 2 - mark.width // 2, 600 * scale - mark.height // 2))
+    # The live ISO's hyprpaper background is a single dark colour; reproduce it
+    # exactly so the boot menu matches the live desktop behind the installer.
+    base = Image.open(BG_DARK_PATH).convert("RGB")
+    if base.size != (width, height):
+        base = base.resize((width, height), Image.Resampling.LANCZOS)
+    base = base.convert("RGBA")
 
     draw = ImageDraw.Draw(base)
 
@@ -366,23 +331,7 @@ def make_background(scale: int = 2) -> Image.Image:
         fill=(*TEXT, 235),
     )
 
-    # Corner tag: out of the way of rEFInd's own bottom hint line.
-    tag_font = ImageFont.truetype(str(find_font("sans-serif", "DejaVu Sans")), 19 * scale)
-    tag = "A E L U M . D E V"
-    tag_box = draw.textbbox((0, 0), tag, font=tag_font)
-    draw.text(
-        (width - 56 * scale - (tag_box[2] - tag_box[0]), height - 42 * scale - (tag_box[3] - tag_box[1])),
-        tag,
-        font=tag_font,
-        fill=(*TEXT, 78),
-    )
-
-    # Fine noise hides gradient banding on 8-bit panels; RGB noise only.
-    rng = np.random.default_rng(7)
-    arr = np.asarray(base).astype(np.int16)
-    noise = rng.integers(-2, 3, size=(height, width, 1), dtype=np.int16)
-    arr[..., :3] = np.clip(arr[..., :3] + noise, 0, 255)
-    return Image.fromarray(arr.astype(np.uint8), "RGBA").convert("RGB")
+    return base.convert("RGB")
 
 
 def make_selection(base_size: int, scale: int = 1) -> Image.Image:
