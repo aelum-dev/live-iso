@@ -14,7 +14,7 @@ The install itself needs no internet. Every package is cached locally in an embe
 - **Auto-launching installer** — on first boot, greetd starts a barebones Hyprland that opens the installer by itself
 - **Silent boot** — clean branded Aelum Plymouth splash (with passphrase unlock on encrypted installs), no console spam
 - **Auto monitor scaling** — detects the connected monitor and applies the right Hyprland scale automatically, so the installer reads crisply at 1080p, 1440p, or 4K
-- **Quick install** — since every package is included, install takes about a minute and the finished OS uses roughly 3.2 GB on btrfs (with compression) or 4.7 GB on ext4
+- **Quick install** — since every package is included, the whole install takes about a minute and a half (68–93 s end to end across the QEMU matrix in `docker/logs/matrix/`), and the finished OS uses roughly 3.2 GB on btrfs (with compression) or 4.7 GB on ext4
 
 ## What you install
 
@@ -85,7 +85,7 @@ This repo only holds the profile content that goes into the ISO. See the [docker
 
 All packages needed for the install are cached in `airootfs/var/cache/aelum/offline-mirror/` and served via a `file://` URL in the ISO's pacman.conf, so the install doesn't reach the network. This applies to installation only — the installed system is a regular Arch install and uses the internet for updates and anything else you add.
 
-Because every package is included, **installation takes about 1 minute**, and the **complete OS requires roughly 3.2 GB of disk space on btrfs (with compression) or 4.7 GB on ext4** after install.
+Because every package is included, **installation takes about a minute and a half** — the matrix logs in `docker/logs/matrix/` run 68–93 s from "Formatting disk" to "Installation completed successfully" on a 20 GB qcow2 in QEMU — and the **complete OS requires roughly 3.2 GB of disk space on btrfs (with compression) or 4.7 GB on ext4** after install.
 
 ---
 

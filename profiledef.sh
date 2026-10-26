@@ -3,7 +3,7 @@
 
 iso_name="aelum"
 iso_label="AELUM_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"
-iso_publisher="Aelum <https://aelum.org>"
+iso_publisher="Aelum <https://aelum.dev>"
 iso_application="Aelum"
 iso_version="$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y.%m.%d)"
 install_dir="arch"
