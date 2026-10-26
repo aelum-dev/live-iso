@@ -26,6 +26,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 - **Kitty**, **Firefox** (with **uBlock Origin** pre-installed), **PipeWire** audio, and a branded **Aelum** Plymouth boot splash (with LUKS passphrase unlock)
 - **GTK + Qt apps get matugen-themed automatically**. In Qt apps, just pick the built-in matugen theme and it matches the rest of the system
 - **zram** compressed swap — fast, and no disk space reserved for a swap file
+- **Snapshots on btrfs** — snapper keeps a timeline of `@` and `@home`, with **btrfs-assistant** as the GUI, so a bad update can be rolled back
 
 ## Why Aelum
 

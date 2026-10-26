@@ -19,6 +19,8 @@ parted
 dosfstools
 e2fsprogs
 btrfs-progs
+btrfs-assistant
+snapper
 lvm2
 cryptsetup
 pv
