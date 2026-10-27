@@ -106,6 +106,7 @@ GLYPHS = {
     "info": 0xF02FC,         # md-information
     "list_numbered": 0xF027B,  # md-format_list_numbered
     "lock_reset": 0xF0773,   # md-lock_reset
+    "history": 0xF02DA,      # md-history — the snapshot menu entry
     "exit": 0xF0206,         # md-exit_to_app
     "chip": 0xF061A,         # md-chip
     "eye_off": 0xF0209,      # md-eye_off
@@ -182,6 +183,10 @@ OS_ICONS = {
     # Theme-only names for Ventoy volumes (not in rEFInd's stock set).
     "os_ventoy": "usb",
     "os_vtoyefi": "usb",
+    # Theme-only name for the snapshot menu entry the installer's generator
+    # writes (installer/backend/install/configure/refind_snapshots.go). A
+    # snapshot must not look like a second copy of the system.
+    "os_snapshot": "history",
 }
 
 # Small tools-row icons, drawn as light glyphs on transparency.
