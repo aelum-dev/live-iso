@@ -56,7 +56,6 @@ This repo is the **Aelum profile** — the content that goes into the ISO. The b
 │   │   ├── pacman.conf        # Installed system pacman config (offline mirror)
 │   │   ├── plymouth/          # Plymouth daemon config
 │   │   ├── skel/              # Default user home (dotfiles)
-│   │   ├── skel/.hushlogin    # Suppress "Last login" message
 │   │   ├── systemd/system/    # Systemd units (animation delay, etc.)
 │   │   └── sudoers.d/         # Sudo config for aelum user
 │   ├── usr/lib/initcpio/             # Live ISO mkinitcpio hooks (aelum-live)
