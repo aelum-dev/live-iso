@@ -60,13 +60,16 @@ btop
 fastfetch
 hyprland
 hyprpaper
-dms-shell
+# dux-shell is DMS 2.0 (renamed from dms-shell); dux-gop is Dux GOP (renamed
+# from dgop). Both Provides/Replaces/Conflicts the old names, so an existing
+# install upgrades in place.
+dux-shell
 noto-fonts
 adwaita-cursors
 kitty
 webkit2gtk-4.1
 cava
-dgop
+dux-gop
 matugen
 nautilus
 firefox
@@ -76,6 +79,13 @@ imv
 gnome-text-editor
 breeze
 
+
+# dux-shell's other optional dependencies are deliberately not shipped:
+#   cups-pk-helper  - no CUPS in this image, so there is no printer to manage
+#   i2c-tools       - external-monitor brightness already goes through ddcutil
+#   qt6ct           - Qt theming goes through qtengine (QT_QPA_PLATFORMTHEME)
+#   qt6-multimedia  - shell sound effects; not part of the Aelum desktop
+#   wtype           - 2.0 pastes the clipboard through zwp_virtual_keyboard_v1
 
 # GPU drivers
 vulkan-radeon
