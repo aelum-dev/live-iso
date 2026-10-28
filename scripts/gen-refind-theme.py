@@ -48,7 +48,7 @@ sheet would be inverted to black.
 
 The logo source is the Plymouth theme's mark, so the same A is used by the
 boot splash and the boot menu. The background is the live ISO's dark-mode
-hyprpaper colour from airootfs/usr/share/DankMaterialShell/bg-dark.png
+hyprpaper colour from airootfs/usr/share/aelum/bg-dark.png
 (solid #141218) with the Aelum lockup at the top, so the boot menu matches the
 live desktop behind the installer.
 
@@ -70,7 +70,7 @@ ROOT = Path(__file__).resolve().parent.parent
 THEME_DIR = ROOT / "airootfs/usr/share/aelum/refind/themes/aelum"
 ICON_DIR = THEME_DIR / "icons"
 LOGO_PATH = ROOT / "airootfs/usr/share/plymouth/themes/aelum/logo.png"
-BG_DARK_PATH = ROOT / "airootfs/usr/share/DankMaterialShell/bg-dark.png"
+BG_DARK_PATH = ROOT / "airootfs/usr/share/aelum/bg-dark.png"
 # Shared with website/scripts/icons.py. The generated PNGs are committed, so
 # only developers regenerating the theme need the full source font.
 NERD_FONT_DEFAULT = ROOT.parent / "website/scripts/SymbolsNerdFont-Regular.ttf"
