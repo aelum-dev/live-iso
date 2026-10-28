@@ -2,7 +2,7 @@
 
 ![Aelum](images/hero-light.png)
 
-Aelum is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [Aelum Installer](https://github.com/aelum-dev/installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the DankMaterialShell + DMS greeter login, automatic color theming with matugen, and more.
+Aelum is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [Aelum Installer](https://github.com/aelum-dev/installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the Dux Shell + Dux Greeter login, automatic color theming with matugen, and more.
 
 The install itself needs no internet. Every package is cached locally in an embedded repository, so it's completely air-gapped: boot it on any machine, the installer starts on its own, and you don't need a network connection to install it. Once installed, it's a normal Arch system — use the internet, update packages, install whatever you like.
 
@@ -20,8 +20,8 @@ The install itself needs no internet. Every package is cached locally in an embe
 
 The installer hands you a finished desktop, pre-configured and ready:
 
-- **Hyprland** dynamic tiling with DankMaterialShell (Quickshell-based) for a clean, modern look
-- **DMS greeter** (greetd) — a fast login screen
+- **Hyprland** dynamic tiling with Dux Shell (Quickshell-based) for a clean, modern look
+- **Dux Greeter** (greetd) — a fast login screen
 - **matugen** — generates matching color schemes from your wallpaper automatically
 - **Kitty**, **Firefox** (with **uBlock Origin** pre-installed), **PipeWire** audio, and a branded **Aelum** Plymouth boot splash (with LUKS passphrase unlock)
 - **GTK + Qt apps get matugen-themed automatically**. In Qt apps, just pick the built-in matugen theme and it matches the rest of the system
@@ -31,7 +31,7 @@ The installer hands you a finished desktop, pre-configured and ready:
 ## Why Aelum
 
 - **Installs without a network.** No chasing slow or missing mirrors during install — everything is baked into the ISO. Handy on a machine that has no internet at install time. (After install you can connect normally.)
-- **A finished desktop, not a blank slate.** You get a curated Hyprland + DMS setup with automatic theming, so it looks reasonable straight after install.
+- **A finished desktop, not a blank slate.** You get a curated Hyprland + Dux Shell setup with automatic theming, so it looks reasonable straight after install.
 - **Quiet boot.** Silent, branded boot splash, auto monitor scaling, and zram instead of a swap file.
 - **Nothing extra.** The live ISO exists to launch the installer, so there's little to configure or clean up.
 
@@ -50,7 +50,7 @@ This repo is the **Aelum profile** — the content that goes into the ISO. The b
 ├── pacman-offline.conf    # Pacman config used by mkarchiso (offline mirror only)
 ├── airootfs/              # Root filesystem for the ISO
 │   ├── etc/
-│   │   ├── greetd/            # greetd + DMS greeter config (launches installer)
+│   │   ├── greetd/            # greetd + Dux Greeter config (launches installer)
 │   │   ├── mkinitcpio.conf.d/ # Live ISO mkinitcpio hooks
 │   │   ├── mkinitcpio.d/      # Kernel preset
 │   │   ├── pacman.conf        # Installed system pacman config (offline mirror)
@@ -61,8 +61,9 @@ This repo is the **Aelum profile** — the content that goes into the ISO. The b
 │   │   └── sudoers.d/         # Sudo config for aelum user
 │   ├── usr/lib/initcpio/             # Live ISO mkinitcpio hooks (aelum-live)
 │   └── usr/share/
-│       ├── aelum/refind/themes/aelum/  # Branded rEFInd boot-menu theme
-│       ├── DankMaterialShell/          # DMS desktop files
+│       ├── aelum/                      # Aelum brand assets
+│       │   ├── refind/themes/aelum/    # Branded rEFInd boot-menu theme
+│       │   └── bg-*.png, wallpaper-*.jpg  # live backgrounds + installed wallpapers
 │       └── plymouth/themes/aelum/      # LUKS unlock splash theme
 ├── efiboot/               # systemd-boot EFI boot entries
 │   └── loader/entries/

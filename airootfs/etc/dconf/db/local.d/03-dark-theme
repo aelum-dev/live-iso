@@ -7,7 +7,7 @@
 # hyprland.lua additionally exports GTK_THEME=adw-gtk3-dark.
 #
 # This file is not copied to the installed system (SetupUsers copies only
-# 01-icons and 02-nautilus-terminal); the installed desktop is themed by DMS.
+# 01-icons and 02-nautilus-terminal); the installed desktop is themed by Dux Shell.
 [org/gnome/desktop/interface]
 gtk-theme='adw-gtk3-dark'
 color-scheme='prefer-dark'

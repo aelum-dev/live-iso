@@ -8,7 +8,7 @@
 # over kitty's theme include and ask running kitty instances to reload their
 # config (SIGUSR1).
 #
-# Live ISO only: the installed system gets its colors from DankMaterialShell.
+# Live ISO only: the installed system gets its colors from Dux Shell.
 set -u
 
 kitty_dir="${HOME}/.config/kitty"

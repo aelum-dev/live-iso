@@ -26,7 +26,7 @@
 #      installer's aelum-luks-hint units (see backend/install/configure/
 #      luks_hint.go).
 
-# DMS dark background (surface → surface-container-lowest)
+# Dux Shell dark background (surface → surface-container-lowest)
 Window.SetBackgroundTopColor(0.078431, 0.070588, 0.094118);
 Window.SetBackgroundBottomColor(0.058824, 0.050980, 0.074510);
 
