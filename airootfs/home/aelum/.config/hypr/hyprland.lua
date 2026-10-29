@@ -94,6 +94,11 @@ hl.config({
 		disable_hyprland_logo = true,
 		disable_splash_rendering = true
 	},
+    quirks = {
+		-- 0.57's KMS dmabuf filtering makes Qt/quickshell clients (Dux) negotiate
+		-- formats that composite black on virtio-gpu (VM); false = 0.56 behavior.
+		skip_non_kms_dmabuf_formats = false,
+	},
     ecosystem = {
 		no_update_news = true
 	}
