@@ -98,6 +98,11 @@ hl.window_rule({
 	opaque = true
 })
 hl.window_rule({ match = { class = "^(zoom)$" }, float = true })
+-- The snapshot-restore prompt (the installer's aelum-snapshot-prompt unit runs a
+-- Quickshell FloatingWindow titled aelum-snapshot-prompt): float it so it keeps
+-- its own card size instead of being tiled, and center it where it opens. The
+-- class is what Quickshell's XDG windows carry; the title is set by the prompt.
+hl.window_rule({ match = { class = "^(org\\.quickshell)$", title = "^(aelum-snapshot-prompt)$" }, float = true, center = true })
 hl.layer_rule({ match = { namespace = "^(quickshell)$" }, no_anim = true })
 hl.layer_rule({ match = { namespace = "^dms:.*" }, no_anim = true })
 
