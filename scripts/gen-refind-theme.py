@@ -240,6 +240,15 @@ TEXT = (0xE9, 0xE0, 0xE8)
 
 SCALE = 4  # supersampling for rounded corners
 
+# rEFInd's egScaleImage() bilinear scaler samples source coordinates
+# x = j * (W-1) / NewW, which never reaches the last two source columns/rows
+# (max x is W-3). On sub-HiDPI screens it downscales every theme asset
+# (288->144, 256->128, 96->48, ...), so artwork touching the PNG edge loses
+# its right/bottom edge there: flattened rounded corners, half-width borders,
+# a hard-clipped selection glow. Keep every asset's content at least two
+# pixels inside the canvas so the dropped row/column is always empty.
+EDGE_MARGIN = 2
+
 
 def hex_str(color: tuple[int, int, int]) -> str:
     return "#%02x%02x%02x" % color
@@ -346,13 +355,27 @@ def make_selection(base_size: int, scale: int = 1) -> Image.Image:
     rim_width = max(2, base_size // 64) * scale
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
-    # Outer glow, built from the same rounded shape and blurred.
+    # Outer glow, built from the same rounded shape and blurred. The shape is
+    # inset by EDGE_MARGIN and its alpha is feathered to zero at the canvas
+    # edge, so the halo fades inside the cell instead of ending in a hard cut
+    # that rEFInd's downscaler would then clip asymmetrically (see EDGE_MARGIN).
     glow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    glow_mask = rounded_mask(size, radius).point(lambda a: a * 120 // 255)
+    glow_inner = size - EDGE_MARGIN * 2
+    glow_mask = Image.new("L", (size, size), 0)
+    glow_mask.paste(rounded_mask(glow_inner, radius - EDGE_MARGIN), (EDGE_MARGIN, EDGE_MARGIN))
+    glow_mask = glow_mask.point(lambda a: a * 120 // 255)
     glow_color = Image.new("RGBA", (size, size), (*ACCENT_LIGHT, 255))
     glow = Image.composite(glow_color, glow, glow_mask)
     glow.putalpha(glow_mask)
     glow = glow.filter(ImageFilter.GaussianBlur(size / 34))
+    feather = max(2, base_size // 32) * scale
+    ramp = np.minimum(
+        np.minimum(np.arange(size), np.arange(size)[::-1])[:, None],
+        np.minimum(np.arange(size), np.arange(size)[::-1])[None, :],
+    )
+    arr = np.array(glow, dtype=np.float32)
+    arr[..., 3] *= np.clip(ramp / feather, 0.0, 1.0)
+    glow = Image.fromarray(arr.astype(np.uint8), "RGBA")
     canvas.alpha_composite(glow)
 
     inset = max(2, base_size // 32) * scale
@@ -380,13 +403,18 @@ def make_tile(base_size: int = 128, scale: int = 1) -> Image.Image:
     radius = (base_size * 15 // 64) * scale
     border_width = max(2, base_size // 64) * scale
     tile = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    body = vertical_gradient(size, CREAM_TOP, CREAM_BOTTOM)
-    body.putalpha(rounded_mask(size, radius))
-    tile.alpha_composite(body)
+    # Inset by EDGE_MARGIN so the rounded corners and border survive rEFInd's
+    # downscaling intact (see EDGE_MARGIN); the mark/glyph is centred on the
+    # canvas regardless.
+    edge = EDGE_MARGIN
+    body = vertical_gradient(size - edge * 2, CREAM_TOP, CREAM_BOTTOM)
+    body.putalpha(rounded_mask(size - edge * 2, radius))
+    tile.alpha_composite(body, (edge, edge))
 
     draw = ImageDraw.Draw(tile)
     draw.rounded_rectangle(
-        (border_width // 2, border_width // 2, size - 1 - border_width // 2, size - 1 - border_width // 2),
+        (edge + border_width // 2, edge + border_width // 2,
+         size - 1 - edge - border_width // 2, size - 1 - edge - border_width // 2),
         radius=radius,
         outline=(*CREAM_BORDER, 255),
         width=border_width,
@@ -459,13 +487,16 @@ def make_badge(codepoint: int, base_size: int = 32, scale: int = 2) -> Image.Ima
     size = base_size * scale
     badge = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
-    big = size * SCALE
+    # Inset by EDGE_MARGIN so the circle keeps its shape under rEFInd's
+    # downscaling (see EDGE_MARGIN).
+    edge = EDGE_MARGIN
+    big = (size - edge * 2) * SCALE
     mask = Image.new("L", (big, big), 0)
     ImageDraw.Draw(mask).ellipse((0, 0, big - 1, big - 1), fill=255)
-    mask = mask.resize((size, size), Image.Resampling.LANCZOS)
-    disk = Image.new("RGBA", (size, size), (*ACCENT, 255))
+    mask = mask.resize((size - edge * 2, size - edge * 2), Image.Resampling.LANCZOS)
+    disk = Image.new("RGBA", (size - edge * 2, size - edge * 2), (*ACCENT, 255))
     disk.putalpha(mask)
-    badge.alpha_composite(disk)
+    badge.alpha_composite(disk, (edge, edge))
     badge.alpha_composite(glyph_layer(codepoint, size, CREAM_TOP, 0.58))
     return badge
 
