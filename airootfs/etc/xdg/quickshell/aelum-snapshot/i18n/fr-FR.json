@@ -1,0 +1,14 @@
+{
+  "snapshot.prompt.body": "Le système que vous utilisiez est conservé comme instantané d’annulation, et l’état restauré démarre après un redémarrage. Rien ne change tant que vous n’avez pas appuyé sur OK.",
+  "snapshot.prompt.cancel": "Annuler",
+  "snapshot.prompt.close": "Fermer",
+  "snapshot.prompt.failed": "Échec de la restauration : {detail}",
+  "snapshot.prompt.failedUnknown": "aelum-snapshot-restore s’est terminé avec une erreur",
+  "snapshot.prompt.ok": "OK",
+  "snapshot.prompt.question": "Restaurer cet état comme système ?",
+  "snapshot.prompt.reboot": "Redémarrer maintenant",
+  "snapshot.prompt.restored": "Restauré. Le système restauré démarrera au prochain redémarrage.",
+  "snapshot.prompt.restoring": "Restauration…",
+  "snapshot.prompt.title": "Vous avez démarré l’instantané {n}",
+  "snapshot.prompt.titleUnknown": "Vous avez démarré un instantané"
+}

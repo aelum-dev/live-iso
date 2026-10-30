@@ -1,0 +1,14 @@
+{
+  "snapshot.prompt.body": "Использовавшаяся система сохраняется как снимок отмены, а восстановленное состояние загрузится после перезагрузки. Ничего не изменится, пока вы не нажмёте ОК.",
+  "snapshot.prompt.cancel": "Отмена",
+  "snapshot.prompt.close": "Закрыть",
+  "snapshot.prompt.failed": "Не удалось восстановить: {detail}",
+  "snapshot.prompt.failedUnknown": "aelum-snapshot-restore завершился с ошибкой",
+  "snapshot.prompt.ok": "ОК",
+  "snapshot.prompt.question": "Восстановить это состояние как систему?",
+  "snapshot.prompt.reboot": "Перезагрузить сейчас",
+  "snapshot.prompt.restored": "Восстановлено. Восстановленная система загрузится при следующей перезагрузке.",
+  "snapshot.prompt.restoring": "Восстановление…",
+  "snapshot.prompt.title": "Вы загрузили снимок {n}",
+  "snapshot.prompt.titleUnknown": "Вы загрузили снимок"
+}

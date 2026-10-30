@@ -30,6 +30,11 @@ file_permissions=(
   ["/usr/local/bin/aelum-installer-cli"]="0:0:755"
   ["/usr/local/bin/auto-scale-monitor.sh"]="0:0:755"
   ["/usr/local/bin/aelum-theme-watch.sh"]="0:0:755"
+  # The snapshot-restore helper ships here and the installer copies it into the
+  # target with its mode. Without this entry it lands 0644: pkexec refuses to run
+  # a program that is not root-owned and executable, so the prompt's OK button
+  # would fail with no clue in the log.
+  ["/usr/local/bin/aelum-snapshot-restore"]="0:0:755"
   # mkinitcpio finds hooks with `type -P`, so both halves of the boot-progress
   # hook need the executable bit (mkarchiso copies airootfs without modes).
   ["/usr/lib/initcpio/hooks/aelum-live"]="0:0:755"

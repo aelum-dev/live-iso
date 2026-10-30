@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "https://specifications.freedesktop.org/PolicyKit/1.0/policyconfig.dtd">
+<!--
+  SPDX-License-Identifier: GPL-3.0
+
+  The action the snapshot prompt's OK button runs the restore through. It ships in
+  the live ISO and the installer copies it into the installed system.
+
+  The defaults refuse it everywhere - the grant is /etc/polkit-1/rules.d's job - so
+  a missing or broken rules file fails closed. The exec.path annotation is what
+  makes `pkexec <helper>` resolve to this action: the desktop names the program,
+  never the action, and pkexec authenticates the program (root-owned, not
+  group/world-writable) before it asks polkit anything at all.
+-->
+<policyconfig>
+  <vendor>Aelum</vendor>
+  <vendor_url>https://aelum.dev</vendor_url>
+
+  <action id="dev.aelum.snapshot.restore">
+    <description>Restore the snapshot this system booted into</description>
+    <message>Restoring makes the booted snapshot the system again; the state it replaces is kept as an undo snapshot.</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>no</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/bin/aelum-snapshot-restore</annotate>
+  </action>
+</policyconfig>

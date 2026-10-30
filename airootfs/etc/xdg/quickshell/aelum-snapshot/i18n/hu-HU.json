@@ -1,0 +1,14 @@
+{
+  "snapshot.prompt.body": "A rendszer, amelyet használt, visszavonási pillanatképként megmarad, és a visszaállított állapot újraindítás után indul. Semmi nem változik, amíg az OK-t nem nyomja meg.",
+  "snapshot.prompt.cancel": "Mégse",
+  "snapshot.prompt.close": "Bezárás",
+  "snapshot.prompt.failed": "A visszaállítás sikertelen: {detail}",
+  "snapshot.prompt.failedUnknown": "az aelum-snapshot-restore hibával lépett ki",
+  "snapshot.prompt.ok": "OK",
+  "snapshot.prompt.question": "Visszaállítja ezt az állapotot a rendszerként?",
+  "snapshot.prompt.reboot": "Újraindítás most",
+  "snapshot.prompt.restored": "Visszaállítva. A visszaállított rendszer a következő újraindításkor indul.",
+  "snapshot.prompt.restoring": "Visszaállítás…",
+  "snapshot.prompt.title": "A(z) {n} pillanatképről indult",
+  "snapshot.prompt.titleUnknown": "Egy pillanatképről indult"
+}

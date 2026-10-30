@@ -1,0 +1,14 @@
+{
+  "snapshot.prompt.body": "Il sistema che stavi usando viene conservato come snapshot di annullamento, e lo stato ripristinato si avvia dopo un riavvio. Nulla cambia finché non premi OK.",
+  "snapshot.prompt.cancel": "Annulla",
+  "snapshot.prompt.close": "Chiudi",
+  "snapshot.prompt.failed": "Ripristino non riuscito: {detail}",
+  "snapshot.prompt.failedUnknown": "aelum-snapshot-restore ha terminato con un errore",
+  "snapshot.prompt.ok": "OK",
+  "snapshot.prompt.question": "Ripristinare questo stato come sistema?",
+  "snapshot.prompt.reboot": "Riavvia adesso",
+  "snapshot.prompt.restored": "Ripristinato. Il sistema ripristinato si avvia al prossimo riavvio.",
+  "snapshot.prompt.restoring": "Ripristino…",
+  "snapshot.prompt.title": "Hai avviato lo snapshot {n}",
+  "snapshot.prompt.titleUnknown": "Hai avviato uno snapshot"
+}

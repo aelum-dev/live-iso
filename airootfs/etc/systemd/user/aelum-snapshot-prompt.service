@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: GPL-3.0
+#
+# Ask whether to restore the snapshot this system booted into.
+#
+# This unit ships in the live ISO and the installer copies it into the installed
+# system. It is system-side (/etc/systemd/user, a load path of every user
+# manager) so every account can run it, but it is pulled in per-home: the wants
+# link seeded into ~/.config/systemd/user/hyprland-session.target.wants/ by
+# /etc/skel - the same mechanism that starts dms.service - starts it in real user
+# sessions only. The greeter runs a Hyprland session too, and a system-side link
+# would ask it as well; the greeter cannot run the restore (it is not in wheel)
+# and did not choose a snapshot, so it is not asked.
+#
+# It runs only when /run/aelum-snapshot-boot exists, which the aelum-snapshot-state
+# generator (written by the installer into the installed system) writes exactly when
+# the root is not the default subvolume. An ordinary boot never runs this unit -
+# and neither does the live ISO, which has no such generator and no marker.
+#
+# The dialog is /etc/xdg/quickshell/aelum-snapshot/shell.qml, run as its own
+# Quickshell instance (QS_INSTANCE_ID) so it never shares an IPC socket with Dux
+# Shell. OK runs /usr/local/bin/aelum-snapshot-restore through the polkit action
+# shipped beside this unit; CANCEL closes and changes nothing.
+#
+# The ExecStartPre delay is about the race with Dux Shell: this unit and
+# dms.service are pulled into the session by the same wants link, and the dialog
+# is a small plain-QtQuick instance - it maps its window while Dux Shell is still
+# loading its bar, so the question would appear over an empty desktop. 5s lets the
+# session exist first, which is also when the dms-colors.json the dialog reads its
+# colors from is freshly written.
+
+[Unit]
+Description=Aelum: ask about restoring the snapshot this system booted into
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+ConditionPathExists=/run/aelum-snapshot-boot
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/sleep 5
+Environment=QS_INSTANCE_ID=aelum-snapshot
+EnvironmentFile=/run/aelum-snapshot-boot
+ExecStart=/usr/bin/quickshell -c aelum-snapshot
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=hyprland-session.target

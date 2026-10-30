@@ -1,0 +1,14 @@
+{
+  "snapshot.prompt.body": "Το σύστημα που χρησιμοποιούσατε διατηρείται ως στιγμιότυπο αναίρεσης, και η αποκαταστημένη κατάσταση εκκινεί μετά από επανεκκίνηση. Τίποτα δεν αλλάζει μέχρι να πατήσετε OK.",
+  "snapshot.prompt.cancel": "Ακύρωση",
+  "snapshot.prompt.close": "Κλείσιμο",
+  "snapshot.prompt.failed": "Η αποκατάσταση απέτυχε: {detail}",
+  "snapshot.prompt.failedUnknown": "Η aelum-snapshot-restore τερμάτισε με σφάλμα",
+  "snapshot.prompt.ok": "OK",
+  "snapshot.prompt.question": "Να αποκατασταθεί αυτή η κατάσταση ως το σύστημα;",
+  "snapshot.prompt.reboot": "Επανεκκίνηση τώρα",
+  "snapshot.prompt.restored": "Αποκαταστάθηκε. Το αποκαταστημένο σύστημα θα εκκινήσει στην επόμενη επανεκκίνηση.",
+  "snapshot.prompt.restoring": "Αποκατάσταση…",
+  "snapshot.prompt.title": "Εκκινήσατε το στιγμιότυπο {n}",
+  "snapshot.prompt.titleUnknown": "Εκκινήσατε ένα στιγμιότυπο"
+}

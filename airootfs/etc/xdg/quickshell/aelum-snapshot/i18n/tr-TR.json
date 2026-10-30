@@ -1,0 +1,14 @@
+{
+  "snapshot.prompt.body": "Kullandığınız sistem bir geri alma anlık görüntüsü olarak korunur ve geri yüklenen durum yeniden başlattıktan sonra önyüklenir. OK düğmesine basana kadar hiçbir şey değişmez.",
+  "snapshot.prompt.cancel": "İptal",
+  "snapshot.prompt.close": "Kapat",
+  "snapshot.prompt.failed": "Geri yükleme başarısız: {detail}",
+  "snapshot.prompt.failedUnknown": "aelum-snapshot-restore bir hatayla sonlandı",
+  "snapshot.prompt.ok": "Tamam",
+  "snapshot.prompt.question": "Bu durum sistem olarak geri yüklensin mi?",
+  "snapshot.prompt.reboot": "Şimdi yeniden başlat",
+  "snapshot.prompt.restored": "Geri yüklendi. Geri yüklenen sistem bir sonraki yeniden başlatmada önyüklenir.",
+  "snapshot.prompt.restoring": "Geri yükleniyor…",
+  "snapshot.prompt.title": "{n} numaralı anlık görüntüyü başlattınız",
+  "snapshot.prompt.titleUnknown": "Bir anlık görüntü başlattınız"
+}
