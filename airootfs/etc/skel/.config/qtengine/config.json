@@ -1,8 +1,11 @@
 {
+  "misc": {
+    "menusHaveIcons": true,
+    "shortcutsForContextMenus": true,
+    "singleClickActivate": false
+  },
   "theme": {
-    "colorScheme": "$HOME/.local/share/color-schemes/DankMatugen.colors",
-    "iconTheme": "breeze",
-    "style": "breeze",
+    "colorScheme": "../.local/share/color-schemes/DankMatugen.colors",
     "font": {
       "family": "Noto Sans",
       "size": 11,
@@ -12,11 +15,8 @@
       "family": "Noto Sans Mono",
       "size": 11,
       "weight": -1
-    }
-  },
-  "misc": {
-    "menusHaveIcons": true,
-    "singleClickActivate": false,
-    "shortcutsForContextMenus": true
+    },
+    "iconTheme": "Fluent-dark",
+    "style": "breeze"
   }
 }
