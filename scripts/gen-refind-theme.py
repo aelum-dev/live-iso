@@ -75,6 +75,17 @@ BG_DARK_PATH = ROOT / "airootfs/usr/share/aelum/bg-dark.png"
 # only developers regenerating the theme need the full source font.
 NERD_FONT_DEFAULT = ROOT.parent / "website/scripts/SymbolsNerdFont-Regular.ttf"
 
+# Icon sizes, matching theme.conf's big_icon_size / small_icon_size. rEFInd
+# centres the selection tiles on them, at 9/8 and 4/3 of those sizes.
+BIG_ICON = 128
+SMALL_ICON = 48
+SELECTION_BIG = BIG_ICON * 9 // 8
+SELECTION_SMALL = SMALL_ICON * 4 // 3
+
+# Corner radius of the cream tile, as a fraction of its side. The selection
+# tiles derive theirs from this so the two shapes stay concentric.
+TILE_RADIUS_RATIO = 15 / 64
+
 # Nerd Font Symbols codepoints. Look glyphs up with:
 #     python3 website/scripts/icons.py find <keyword>
 GLYPHS = {
@@ -223,11 +234,11 @@ VOLUME_ICONS = {
 # (glyph key, base size, scale): arrows and mouse match rEFInd's native sizes;
 # boot logos are drawn at the big-icon size.
 PLAIN_ICONS = {
-    "arrow_left": ("arrow_left", 48, 2),
-    "arrow_right": ("arrow_right", 48, 2),
+    "arrow_left": ("arrow_left", SMALL_ICON, 2),
+    "arrow_right": ("arrow_right", SMALL_ICON, 2),
     "mouse": ("cursor", 16, 2),
-    "boot_linux": ("linux", 128, 2),
-    "boot_win": ("windows", 128, 2),
+    "boot_linux": ("linux", BIG_ICON, 2),
+    "boot_win": ("windows", BIG_ICON, 2),
 }
 
 # Brand palette (shared with website/src/styles/base.css and the Plymouth theme).
@@ -348,10 +359,33 @@ def make_background(scale: int = 2) -> Image.Image:
     return base.convert("RGB")
 
 
-def make_selection(base_size: int, scale: int = 1) -> Image.Image:
-    """Rounded selection tile, drawn at base_size x scale."""
+def tile_radius(base_size: int) -> int:
+    """Corner radius of the cream tile make_tile() draws at base_size."""
+    return int(base_size * TILE_RADIUS_RATIO)
+
+
+def selection_radius(base_size: int, icon_base: int | None) -> int:
+    """Corner radius of a selection tile, matching the shape it sits behind.
+
+    rEFInd centres the selection tile on the icon it highlights, so the tile is
+    the icon's cream tile offset outward: the corner arcs keep the icon's arc
+    centre and the radius grows by the margin between the two boxes. A tighter
+    radius makes the selection colour bulge out at the corners instead of
+    framing the icon evenly. The tools row has no tile underneath, so
+    selection_small keeps the big tile's ratio instead.
+    """
+    inner = base_size - max(2, base_size // 32) * 2
+    if icon_base is None:
+        big_inner = SELECTION_BIG - max(2, SELECTION_BIG // 32) * 2
+        return round(inner * selection_radius(SELECTION_BIG, BIG_ICON) / big_inner)
+    return tile_radius(icon_base) + (inner - (icon_base - EDGE_MARGIN * 2)) // 2
+
+
+def make_selection(base_size: int, scale: int = 1, icon_base: int | None = None) -> Image.Image:
+    """Rounded selection tile, drawn at base_size x scale behind an icon_base icon."""
     size = base_size * scale
-    radius = (base_size * 9 // 48) * scale
+    inset = max(2, base_size // 32) * scale
+    radius = selection_radius(base_size, icon_base) * scale
     rim_width = max(2, base_size // 64) * scale
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
@@ -359,10 +393,11 @@ def make_selection(base_size: int, scale: int = 1) -> Image.Image:
     # inset by EDGE_MARGIN and its alpha is feathered to zero at the canvas
     # edge, so the halo fades inside the cell instead of ending in a hard cut
     # that rEFInd's downscaler would then clip asymmetrically (see EDGE_MARGIN).
+    # Its radius keeps it concentric with the body, which is inset by `inset`.
     glow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     glow_inner = size - EDGE_MARGIN * 2
     glow_mask = Image.new("L", (size, size), 0)
-    glow_mask.paste(rounded_mask(glow_inner, radius - EDGE_MARGIN), (EDGE_MARGIN, EDGE_MARGIN))
+    glow_mask.paste(rounded_mask(glow_inner, radius + inset - EDGE_MARGIN), (EDGE_MARGIN, EDGE_MARGIN))
     glow_mask = glow_mask.point(lambda a: a * 120 // 255)
     glow_color = Image.new("RGBA", (size, size), (*ACCENT_LIGHT, 255))
     glow = Image.composite(glow_color, glow, glow_mask)
@@ -378,17 +413,16 @@ def make_selection(base_size: int, scale: int = 1) -> Image.Image:
     glow = Image.fromarray(arr.astype(np.uint8), "RGBA")
     canvas.alpha_composite(glow)
 
-    inset = max(2, base_size // 32) * scale
     inner = size - inset * 2
     body = vertical_gradient(inner, (0x9C, 0x5A, 0x87, 178), (0x5E, 0x35, 0x52, 178))
-    body.putalpha(rounded_mask(inner, radius - inset // 2).point(lambda a: a * 178 // 255))
+    body.putalpha(rounded_mask(inner, radius).point(lambda a: a * 178 // 255))
 
     # Light-plum rim.
     rim = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     rim_draw = ImageDraw.Draw(rim)
     rim_draw.rounded_rectangle(
         (inset, inset, size - inset - 1, size - inset - 1),
-        radius=radius - inset // 2,
+        radius=radius,
         outline=(0xEF, 0xC0, 0xDC, 235),
         width=rim_width,
     )
@@ -397,10 +431,10 @@ def make_selection(base_size: int, scale: int = 1) -> Image.Image:
     return canvas
 
 
-def make_tile(base_size: int = 128, scale: int = 1) -> Image.Image:
+def make_tile(base_size: int = BIG_ICON, scale: int = 1) -> Image.Image:
     """Cream rounded tile shared by the Aelum mark and the OS glyph icons."""
     size = base_size * scale
-    radius = (base_size * 15 // 64) * scale
+    radius = tile_radius(base_size) * scale
     border_width = max(2, base_size // 64) * scale
     tile = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     # Inset by EDGE_MARGIN so the rounded corners and border survive rEFInd's
@@ -422,7 +456,7 @@ def make_tile(base_size: int = 128, scale: int = 1) -> Image.Image:
     return tile
 
 
-def make_icon(base_size: int = 128, scale: int = 1) -> Image.Image:
+def make_icon(base_size: int = BIG_ICON, scale: int = 1) -> Image.Image:
     """Aelum OS tile, drawn at base_size x scale."""
     size = base_size * scale
     tile = make_tile(base_size, scale)
@@ -463,7 +497,7 @@ def glyph_layer(
     return layer
 
 
-def make_glyph_icon(codepoint: int, base_size: int = 128, scale: int = 1) -> Image.Image:
+def make_glyph_icon(codepoint: int, base_size: int = BIG_ICON, scale: int = 1) -> Image.Image:
     """Nerd Font glyph on the shared cream tile, centred and fitted."""
     size = base_size * scale
     tile = make_tile(base_size, scale)
@@ -473,7 +507,7 @@ def make_glyph_icon(codepoint: int, base_size: int = 128, scale: int = 1) -> Ima
 
 def make_plain_glyph(
     codepoint: int,
-    base_size: int = 48,
+    base_size: int = SMALL_ICON,
     scale: int = 2,
     color: tuple[int, int, int] = TEXT,
     box_ratio: float = 0.78,
@@ -482,7 +516,7 @@ def make_plain_glyph(
     return glyph_layer(codepoint, base_size * scale, color, box_ratio)
 
 
-def make_badge(codepoint: int, base_size: int = 32, scale: int = 2) -> Image.Image:
+def make_badge(codepoint: int, base_size: int = BIG_ICON // 4, scale: int = 2) -> Image.Image:
     """Plum circular volume badge with a cream glyph."""
     size = base_size * scale
     badge = Image.new("RGBA", (size, size), (0, 0, 0, 0))
@@ -544,8 +578,10 @@ def main() -> None:
         background = make_background(2)
         background.save(THEME_DIR / "background.png", optimize=True)
 
-        make_selection(144, 2).save(THEME_DIR / "selection_big.png", optimize=True)
-        make_selection(64, 2).save(THEME_DIR / "selection_small.png", optimize=True)
+        make_selection(SELECTION_BIG, 2, BIG_ICON).save(THEME_DIR / "selection_big.png", optimize=True)
+        # The tools row has no cream tile under it, so selection_small keeps the
+        # big tile's corner ratio instead of matching an icon tile.
+        make_selection(SELECTION_SMALL, 2).save(THEME_DIR / "selection_small.png", optimize=True)
 
         make_font(1).save(THEME_DIR / "font.png", optimize=True)
         make_font(2).save(THEME_DIR / "font-2x.png", optimize=True)
@@ -553,13 +589,13 @@ def main() -> None:
     # Aelum's own menu fragments point at os_arch.png, so it keeps the brand
     # mark. Every other stock rEFInd icon name gets a themed replacement, so
     # the menu never falls back to rEFInd's stock artwork.
-    make_icon(128, 2).save(ICON_DIR / "os_arch.png", optimize=True)
+    make_icon(BIG_ICON, 2).save(ICON_DIR / "os_arch.png", optimize=True)
     for name, key in OS_ICONS.items():
-        make_glyph_icon(GLYPHS[key], 128, 2).save(ICON_DIR / f"{name}.png", optimize=True)
+        make_glyph_icon(GLYPHS[key], BIG_ICON, 2).save(ICON_DIR / f"{name}.png", optimize=True)
     for name, key in SMALL_ICONS.items():
-        make_plain_glyph(GLYPHS[key], 48, 2).save(ICON_DIR / f"{name}.png", optimize=True)
+        make_plain_glyph(GLYPHS[key], SMALL_ICON, 2).save(ICON_DIR / f"{name}.png", optimize=True)
     for name, key in VOLUME_ICONS.items():
-        make_badge(GLYPHS[key], 32, 2).save(ICON_DIR / f"{name}.png", optimize=True)
+        make_badge(GLYPHS[key], BIG_ICON // 4, 2).save(ICON_DIR / f"{name}.png", optimize=True)
     for name, (key, base_size, scale) in PLAIN_ICONS.items():
         make_plain_glyph(GLYPHS[key], base_size, scale).save(ICON_DIR / f"{name}.png", optimize=True)
     Image.new("RGBA", (32, 32), (0, 0, 0, 0)).save(ICON_DIR / "transparent.png", optimize=True)
