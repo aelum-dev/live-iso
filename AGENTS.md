@@ -116,6 +116,10 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   force-installs it from addons.mozilla.org by add-on ID (`uBlock0@raymondhill.net`) on first launch, so
   nothing is bundled in the ISO and the add-on needs the network the first time Firefox runs. The same
   file locks `widget.gtk.libadwaita-colors.enabled` off so GTK apps keep the matugen palette.
+- **`auto-scale-monitor.sh` is live-session only.** It runs from the live user's Hyprland config
+  (`home/aelum/.config/hypr/hyprland.lua` and `dms/outputs.lua`), not from `/etc/skel`, so installed
+  homes never start it. The installed system has no automatic monitor scaling yet — don't describe it
+  as an installed feature.
 - `efiboot/` is left over from the old systemd-boot profile. Nothing uses it.
 
 ## License

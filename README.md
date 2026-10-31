@@ -15,7 +15,7 @@ and stays out of the way. Everything you keep is written by that installer.
 - Hyprland with Dux Shell, colored to match your wallpaper (matugen)
 - Dux Greeter login, Kitty, Firefox with uBlock Origin added on first launch, PipeWire audio
 - ext4 or btrfs, with or without LUKS2 — your choice on the disk screen
-- zram instead of a swap file, an Aelum boot menu and splash, monitors scaled automatically
+- zram instead of a swap file, an Aelum boot menu and splash
 - about 1.5 minutes to install, and roughly 3.2 GB used on btrfs (4.7 GB on ext4)
 
 Needs UEFI and at least 8 GB of disk. Automatic mode erases the whole disk; manual mode formats only
