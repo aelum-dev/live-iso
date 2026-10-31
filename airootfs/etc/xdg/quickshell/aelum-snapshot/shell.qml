@@ -12,9 +12,9 @@
 // the same words. It runs only on a snapshot boot: aelum-snapshot-prompt.service
 // is gated on the marker the aelum-snapshot-state generator writes, and the
 // snapshot number comes through that same file (EnvironmentFile), together with
-// the phrase and date the boot menu titled that snapshot with - added by
-// aelum-refind-snapshots - so the question names the state by the very words it
-// was chosen with. OK runs /usr/local/bin/aelum-snapshot-restore
+// that snapshot's own description and date - added by aelum-refind-snapshots,
+// in whatever language the description was written, because the menu itself
+// names a state only by number and date. OK runs /usr/local/bin/aelum-snapshot-restore
 // through pkexec - the polkit action shipped beside this file grants it to the
 // local, active session of an admin user, which is exactly the session of the
 // person who chose OK; everywhere else it is refused. CANCEL closes and changes
@@ -53,13 +53,13 @@ Scope {
   // number unknown" - the marker's existence is the fact, the number is detail.
   property int snapshot: parseInt(Quickshell.env("SNAPSHOT") || "0", 10) || 0
 
-  // The words the boot menu used for this snapshot: aelum-refind-snapshots adds
-  // to the marker the same phrase and date it put in the menu title for the
-  // booted snapshot. They are data, not copy - the dialog shows them as they
-  // are - and they are what the person picked this state out of the menu with,
-  // so the question asks with them. Both are optional: an older system's marker,
-  // or a snapshot whose info.xml could not be read, leaves the question at the
-  // number alone.
+  // What this snapshot is for: aelum-refind-snapshots adds the booted snapshot's
+  // own description and date to the marker - in whatever language the
+  // description was written, because this is a desktop window and the firmware
+  // menu is not. They are data, not copy - the dialog shows them as they are -
+  // and they are what the state is worth restoring for. Both are optional: an
+  // older system's marker, or a snapshot whose info.xml could not be read,
+  // leaves the question at the number alone.
   property string snapshotPhrase: (Quickshell.env("SNAPSHOT_PHRASE") || "").trim()
   property string snapshotDate: (Quickshell.env("SNAPSHOT_DATE") || "").trim()
   readonly property string metaLine: {
