@@ -11,8 +11,10 @@
 // unchanged, so the live session and the installed system ask the same question in
 // the same words. It runs only on a snapshot boot: aelum-snapshot-prompt.service
 // is gated on the marker the aelum-snapshot-state generator writes, and the
-// snapshot number comes through that same file (EnvironmentFile), so the question
-// names the state it is about. OK runs /usr/local/bin/aelum-snapshot-restore
+// snapshot number comes through that same file (EnvironmentFile), together with
+// the phrase and date the boot menu titled that snapshot with - added by
+// aelum-refind-snapshots - so the question names the state by the very words it
+// was chosen with. OK runs /usr/local/bin/aelum-snapshot-restore
 // through pkexec - the polkit action shipped beside this file grants it to the
 // local, active session of an admin user, which is exactly the session of the
 // person who chose OK; everywhere else it is refused. CANCEL closes and changes
@@ -50,6 +52,26 @@ Scope {
   // The number the unit's EnvironmentFile carried in. 0 means "a snapshot,
   // number unknown" - the marker's existence is the fact, the number is detail.
   property int snapshot: parseInt(Quickshell.env("SNAPSHOT") || "0", 10) || 0
+
+  // The words the boot menu used for this snapshot: aelum-refind-snapshots adds
+  // to the marker the same phrase and date it put in the menu title for the
+  // booted snapshot. They are data, not copy - the dialog shows them as they
+  // are - and they are what the person picked this state out of the menu with,
+  // so the question asks with them. Both are optional: an older system's marker,
+  // or a snapshot whose info.xml could not be read, leaves the question at the
+  // number alone.
+  property string snapshotPhrase: (Quickshell.env("SNAPSHOT_PHRASE") || "").trim()
+  property string snapshotDate: (Quickshell.env("SNAPSHOT_DATE") || "").trim()
+  readonly property string metaLine: {
+    const parts = [];
+    if (prompt.snapshotPhrase !== "") {
+      parts.push(prompt.snapshotPhrase);
+    }
+    if (prompt.snapshotDate !== "") {
+      parts.push(prompt.snapshotDate);
+    }
+    return parts.join(" · ");
+  }
 
   // The dialog's whole state: ask, then the result of pressing OK.
   property string phase: "ask"
@@ -293,10 +315,12 @@ Scope {
     // stay in sync with that rule.
     title: "aelum-snapshot-prompt"
 
-    // The window is the card. The width is fixed so the text does not reflow
-    // while it is being read. The text block is anchored to the card's top and
-    // the buttons to its bottom-right corner, and the body reserves the ask
-    // phase's height in every phase (see askBody), so the card keeps one size
+    // The window is the card. Its width is measured once - from the buttons,
+    // which are as wide as their own labels - and fixed from then on, so the text
+    // does not reflow while it is being read and the card is sized for the
+    // language it is actually asking in. The text block is anchored to the card's
+    // top and the buttons to its bottom-right corner, and the body reserves the
+    // ask phase's height in every phase (see askBody), so the card keeps one size
     // through the whole flow: pressing OK swaps the buttons in place instead of
     // moving them out from under the hand. A failure detail longer than the
     // ask copy still grows the card.
@@ -305,7 +329,17 @@ Scope {
     property int sidePadding: 32
     property int buttonGap: 24
     property int buttonHeight: 42
-    implicitWidth: cardWidth
+    // A button is as wide as its own label plus this padding, with buttonMinWidth
+    // as a floor so a short label ("OK") still reads as a button. Text lays out
+    // even when invisible, so all four labels are measured in every phase and the
+    // window takes the widest footer the whole flow could need - the card never
+    // resizes mid-conversation, whatever the language.
+    property int buttonMinWidth: 130
+    property int buttonLabelPadding: 24
+    property int footerWidth: Math.max(
+        cancelBtn.implicitWidth + okBtn.implicitWidth + buttons.spacing,
+        closeBtn.implicitWidth + rebootBtn.implicitWidth + buttons.spacing)
+    implicitWidth: Math.max(cardWidth, footerWidth + 2 * sidePadding)
     implicitHeight: content.height + buttonGap + buttonHeight + 2 * cardPadding
 
     color: "transparent"
@@ -357,11 +391,34 @@ Scope {
         width: parent.width - 2 * dialog.sidePadding
         spacing: 16
 
-        Text {
-          text: prompt.snapshot > 0 ? prompt.tr("title") : prompt.tr("titleUnknown")
-          color: prompt.color("on_surface")
-          font.pixelSize: 22
-          font.bold: true
+        Column {
+          id: titleBlock
+          width: parent.width
+          // No gap when there is nothing to gap to: a marker without the
+          // enrichment leaves the title block exactly the title.
+          spacing: prompt.metaLine !== "" ? 6 : 0
+
+          Text {
+            text: prompt.snapshot > 0 ? prompt.tr("title") : prompt.tr("titleUnknown")
+            color: prompt.color("on_surface")
+            font.pixelSize: 22
+            font.bold: true
+          }
+
+          Text {
+            // The snapshot as the boot menu named it - "Before system update ·
+            // 30 Oct 2026 14:02" - the words the person chose it by, shown so
+            // the question and the menu entry name the same state. Height 0
+            // when empty, so it reserves nothing in a dialog that has no words
+            // to show.
+            visible: prompt.metaLine !== ""
+            width: parent.width
+            height: visible ? implicitHeight : 0
+            wrapMode: Text.WordWrap
+            text: prompt.metaLine
+            color: prompt.color("on_surface_variant")
+            font.pixelSize: 15
+          }
         }
 
         Text {
@@ -422,13 +479,16 @@ Scope {
         spacing: 12
 
         Rectangle {
+          id: cancelBtn
           visible: prompt.phase === "ask"
-          width: 130
+          implicitWidth: Math.max(dialog.buttonMinWidth, cancelLabel.implicitWidth + 2 * dialog.buttonLabelPadding)
+          width: implicitWidth
           height: dialog.buttonHeight
           radius: 10
           color: prompt.color("surface_bright")
           border.color: prompt.color("outline_variant")
           Text {
+            id: cancelLabel
             anchors.centerIn: parent
             text: prompt.tr("cancel")
             font.capitalization: Font.AllUppercase
@@ -443,12 +503,15 @@ Scope {
         }
 
         Rectangle {
+          id: okBtn
           visible: prompt.phase === "ask"
-          width: 130
+          implicitWidth: Math.max(dialog.buttonMinWidth, okLabel.implicitWidth + 2 * dialog.buttonLabelPadding)
+          width: implicitWidth
           height: dialog.buttonHeight
           radius: 10
           color: prompt.color("primary")
           Text {
+            id: okLabel
             anchors.centerIn: parent
             text: prompt.tr("ok")
             font.capitalization: Font.AllUppercase
@@ -467,13 +530,16 @@ Scope {
         }
 
         Rectangle {
+          id: closeBtn
           visible: prompt.phase === "done" || prompt.phase === "failed"
-          width: 130
+          implicitWidth: Math.max(dialog.buttonMinWidth, closeLabel.implicitWidth + 2 * dialog.buttonLabelPadding)
+          width: implicitWidth
           height: dialog.buttonHeight
           radius: 10
           color: prompt.color("surface_bright")
           border.color: prompt.color("outline_variant")
           Text {
+            id: closeLabel
             anchors.centerIn: parent
             text: prompt.tr("close")
             font.capitalization: Font.AllUppercase
@@ -488,12 +554,15 @@ Scope {
         }
 
         Rectangle {
+          id: rebootBtn
           visible: prompt.phase === "done"
-          width: 170
+          implicitWidth: Math.max(dialog.buttonMinWidth, rebootLabel.implicitWidth + 2 * dialog.buttonLabelPadding)
+          width: implicitWidth
           height: dialog.buttonHeight
           radius: 10
           color: prompt.color("primary")
           Text {
+            id: rebootLabel
             anchors.centerIn: parent
             text: prompt.tr("reboot")
             font.capitalization: Font.AllUppercase
