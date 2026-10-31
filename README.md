@@ -1,6 +1,9 @@
 # Aelum
 
-![Aelum](images/hero-light.png)
+<!-- images/hero-dark.png is the website's own hero shot at full 2560x1440
+     (website/assets/desktop-control-dark.png). Re-copy from the website repo if
+     the desktop shots change. -->
+![The Aelum desktop with the Dux Shell control center open](images/hero-dark.png)
 
 Aelum is an Arch Linux distro with a fully offline installer. The live ISO itself is intentionally barebones — its only job is to boot and launch the [Aelum Installer](https://github.com/aelum-dev/installer). That installer then sets up a complete, polished desktop: [Hyprland](https://hyprland.org/) window management, the Dux Shell + Dux Greeter login, automatic color theming with matugen, and more.
 
