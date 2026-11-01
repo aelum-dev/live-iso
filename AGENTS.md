@@ -105,7 +105,10 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
 - **rEFInd is per-install.** The installer copies `usr/share/aelum/refind/themes/aelum` to
   `EFI/refind/themes/aelum` and includes it from `refind.conf`; each install then writes its own
   `EFI/refind/aelum/<id>.conf` (plus `<id>-snapshots.conf` on btrfs) and keeps its kernel and
-  initramfs in `aelum/<id>/`, so several Aelum installs share one ESP without clobbering each other.
+  initramfs in `aelum/<id>/`, so nothing one install writes can land on another's. That isolation is
+  never tested against a shared ESP, though: **each install owns its own ESP** — manual mode always
+  formats the Boot partition it is given (installer `1f30229`), so a second install on the same disk
+  takes its own Boot + System partition.
 - **rEFInd artwork has fixed size rules.** Icons and selections are generated at 2× because rEFInd
   doubles icons at ≥1921px screen width (256px OS icons are native on 2K/4K, downscaled on 1080p; tool
   glyphs 96px, volume badges 64px, mouse 32px). rEFInd does not scale custom fonts, so the installer
