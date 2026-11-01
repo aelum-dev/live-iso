@@ -21,7 +21,7 @@ airootfs/
   etc/greetd/              # greetd + Hyprland autostart → the installer
   etc/mkinitcpio.conf.d/   # live-ISO hooks (kms, aelum-live, …)
   etc/mkinitcpio.d/        # kernel preset
-  etc/pacman.conf          # the INSTALLED system's config (file:// offline mirror)
+  etc/pacman.conf          # the LIVE SESSION's config (file:// offline mirror) — never copied to the target
   etc/pacman.d/hooks/      # squashfs mount threads, fontconfig cache, hook cleanup
   etc/polkit-1/            # snapshot-restore action + rule
   etc/plymouth/            # splash daemon config
@@ -62,11 +62,18 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   `aelum-theme-watch.sh`, both halves of the `aelum-live` initcpio hook (mkinitcpio finds hooks with
   `type -P`), and `aelum-snapshot-restore` (pkexec refuses to authenticate a program it cannot exec —
   silently, with nothing in the log).
-- **The two pacman.conf files are different things.** `pacman-offline.conf` is what the *build* uses
-  (empty DB path, so `pacman -Syw` pulls only dependency trees); `airootfs/etc/pacman.conf` is what
-  the *installed system* ships with (`[aelum-offline] Server = file:///var/cache/aelum/offline-mirror`).
-  The repo DB is generated during the build. The offline mirror is install-time only — the installed
-  system updates from normal mirrors.
+- **Neither pacman.conf is the installed system's.** `pacman-offline.conf` is what the *build* uses
+  (empty DB path, so `pacman -Syw` pulls only dependency trees); `airootfs/etc/pacman.conf` is what the
+  **live session** uses (`[aelum-offline] Server = file:///var/cache/aelum/offline-mirror`) — that is
+  why `pacstrap` resolves every name from the mirror (install logs: `aelum-offline downloading...`).
+  The repo DB is generated during the build. Nothing carries that config into the target:
+  `installbase` runs `pacstrap -K /mnt …`, and pacstrap copies the host's config only with `-P`; no
+  installer step writes `pacman.conf` or anything in `etc/pacman.d/` except the mirrorlist
+  (`installer/backend/install/configure/system.go`). So an installed system runs the **stock
+  `pacman.conf` from the `pacman` package** (core/extra/multilib + `Include =
+  /etc/pacman.d/mirrorlist`). The offline mirror is install-time only — installed systems update from
+  normal mirrors. Anything that must add a repo to an installed system has to be **written by the
+  installer**, not shipped from `airootfs`.
 - **Squashfs is zstd `-Xcompression-level 19 -b 1M`, on purpose.** The kernel decodes one xz stream
   per block on a single core; zstd is roughly an order of magnitude faster per core, and the live ISO
   mounts the image with `threads=percpu` (`etc/pacman.d/hooks/50-aelum-squashfs-threads.hook`,
