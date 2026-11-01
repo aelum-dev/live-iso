@@ -1,13 +1,21 @@
-# Live ISO only: start the session dark so the installer's GTK window never
-# flashes the light Adwaita background before its web content paints.
+# Start the session dark: the installer's GTK window never flashes the light
+# Adwaita background before its web content paints, and the installed desktop
+# starts in the same mode its seeded palette is in (skel/.cache/dms/dms-colors.json
+# and skel/.config/gtk-*/dank-colors.css are the dark variants).
 #
 # color-scheme also drives the settings portal's org.freedesktop.appearance
-# value, which is what WebKitGTK reads for `prefers-color-scheme`. GTK3 (the
-# installer window) does not consume gtk-theme without an XSettings daemon, so
-# hyprland.lua additionally exports GTK_THEME=adw-gtk3-dark.
+# value, which is what WebKitGTK reads for `prefers-color-scheme`, and what
+# libadwaita reads for a GTK4 app's palette. GTK3 does not consume gtk-theme
+# without an XSettings daemon, which is why the *live* session's
+# home/aelum/.config/hypr/hyprland.lua exports GTK_THEME=adw-gtk3-dark as well:
+# a GTK3 app in the installed system takes its theme from settings.ini and its
+# colors from ~/.config/gtk-3.0/{gtk.css -> dank-colors.css}.
 #
-# This file is not copied to the installed system (SetupUsers copies only
-# 01-icons and 02-nautilus-terminal); the installed desktop is themed by Dux Shell.
+# Copied to the installed system too (isocopy). Without it an app that starts
+# before Dux Shell has applied its theme gets a light libadwaita palette and a
+# light portal while the desktop's own palette is dark; Dux Shell writes these
+# same keys per mode into the user database, which takes precedence, so switching
+# the mode still overrides this.
 [org/gnome/desktop/interface]
 gtk-theme='adw-gtk3-dark'
 color-scheme='prefer-dark'

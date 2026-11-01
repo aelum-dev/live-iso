@@ -1,2 +1,6 @@
+# The icon theme the desktop gets before Dux Shell has applied a theme: the dark
+# variant, because the seeded session (skel/.cache/dms/dms-colors.json) is dark.
+# Dux Shell re-picks the icon theme per mode once it runs; this only covers the
+# first session start and the greeter.
 [org/gnome/desktop/interface]
-icon-theme='Fluent-light'
+icon-theme='Fluent-dark'

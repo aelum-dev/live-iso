@@ -49,6 +49,7 @@ Ignored after a local build: `work/`, `output/`, `airootfs/var/cache/aelum/offli
 | `usr/share/aelum/refind/themes/aelum/*.png` | `python3 scripts/gen-refind-theme.py` (`--icons-only` while iterating; `AELUM_NERD_FONT=` if the repos aren't side by side) |
 | `etc/xdg/quickshell/aelum-snapshot/i18n/<locale>.json` | `installer/backend/scripts/gen-snapshot-prompt-i18n.go`, from the installer's `snapshot.prompt.*` translations |
 | `airootfs/usr/local/bin/aelum-installer{,-cli}` | the installer build (`docker/build-iso.sh` copies them in) |
+| `etc/skel/.config/gtk-{3.0,4.0}/dank-colors.css` | Dux Shell + matugen on a desktop using the shipped wallpaper, in the mode `etc/skel/.cache/dms/dms-colors.json` is seeded in — the same file in both directories (see "The seeded theme state is one mode") |
 | `images/hero-dark.png` | copy of `website/assets/desktop-control-dark.png` (2560×1440) when the site's desktop shots change |
 
 Commit the regenerated artifact in the same commit as the change that needs it. The rEFInd icon set
@@ -126,6 +127,24 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   force-installs it from addons.mozilla.org by add-on ID (`uBlock0@raymondhill.net`) on first launch, so
   nothing is bundled in the ISO and the add-on needs the network the first time Firefox runs. The same
   file locks `widget.gtk.libadwaita-colors.enabled` off so GTK apps keep the matugen palette.
+- **The seeded theme state is one mode, in five files.** Nothing in an installed session puts a
+  palette into GTK before Dux Shell has applied one, so what `etc/skel` and the copied dconf
+  keyfiles leave behind is what the first app of the first session sees. The files that name that
+  state: `.cache/dms/dms-colors.json` (`"mode"`), `.config/gtk-3.0/dank-colors.css` and
+  `.config/gtk-4.0/dank-colors.css` (the palette GTK reads), `.config/gtk-{3.0,4.0}/settings.ini`
+  and `etc/dconf/db/local.d/01-icons` (the icon variant), and `etc/dconf/db/local.d/03-dark-theme`
+  (`gtk-theme` + `color-scheme`, which is what GTK4, libadwaita and the settings portal read —
+  copied to the target too; Dux Shell writes the same keys per mode into the user database, and the
+  user database wins, so switching the mode still overrides it). A light palette under a dark seeded
+  mode is what made a first-start Firefox render plain Adwaita until the mode was switched.
+  The two palette files are **Dux Shell's own output** — regenerate them from a Dux Shell desktop
+  running that mode (they come out byte-identical for gtk-3.0 and gtk-4.0), never write one by
+  hand. `.config/gtk-3.0/gtk.css` is a symlink to `dank-colors.css` and is the whole GTK3 half of
+  the chain: without it a GTK3 app (Firefox is one — `libmozgtk.so` links `libgtk-3.so.0`) loads its
+  theme and never sees the palette. `gtk-4.0/gtk.css` imports the palette and nothing else; an import
+  of a file nothing writes is dead config plus a parser error on every app start. What proves it:
+  `docker/scripts/verify-installed.sh` (mode ↔ palette ↔ icon variant, on a real install) and
+  `shared/aelum-color-probe.sh` (what a booted session renders with no theme applied).
 - **`auto-scale-monitor.sh` is live-session only.** It runs from the live user's Hyprland config
   (`home/aelum/.config/hypr/hyprland.lua` and `dms/outputs.lua`), not from `/etc/skel`, so installed
   homes never start it. The installed system has no automatic monitor scaling yet — don't describe it
