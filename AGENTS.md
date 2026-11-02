@@ -49,7 +49,7 @@ Ignored after a local build: `work/`, `output/`, `airootfs/var/cache/aelum/offli
 | `usr/share/aelum/refind/themes/aelum/*.png` | `python3 scripts/gen-refind-theme.py` (`--icons-only` while iterating; `AELUM_NERD_FONT=` if the repos aren't side by side) |
 | `etc/xdg/quickshell/aelum-snapshot/i18n/<locale>.json` | `installer/backend/scripts/gen-snapshot-prompt-i18n.go`, from the installer's `snapshot.prompt.*` translations |
 | `airootfs/usr/local/bin/aelum-installer{,-cli}` | the installer build (`docker/build-iso.sh` copies them in) |
-| `etc/skel/.config/gtk-{3.0,4.0}/dank-colors.css` | Dux Shell + matugen on a desktop using the shipped wallpaper, in the mode `etc/skel/.cache/dms/dms-colors.json` is seeded in — the same file in both directories (see "The seeded theme state is one mode") |
+| `etc/skel/.config/gtk-{3.0,4.0}/dank-colors.css` + `etc/skel/.cache/dms/dms-colors.json` | Dux Shell + matugen on a desktop using the shipped wallpaper, in the mode `etc/skel/.cache/dms/dms-colors.json` is seeded in, under the `"matugenSpec"` seeded in `etc/skel/.config/dms/settings.json` — the palette comes out byte-identical for gtk-3.0 and gtk-4.0 (see "The seeded theme state is one mode") |
 | `images/hero-dark.png` | copy of `website/assets/desktop-control-dark.png` (2560×1440) when the site's desktop shots change |
 
 Commit the regenerated artifact in the same commit as the change that needs it. The rEFInd icon set
@@ -139,7 +139,12 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   mode is what made a first-start Firefox render plain Adwaita until the mode was switched.
   The two palette files are **Dux Shell's own output** — regenerate them from a Dux Shell desktop
   running that mode (they come out byte-identical for gtk-3.0 and gtk-4.0), never write one by
-  hand. `.config/gtk-3.0/gtk.css` is a symlink to `dank-colors.css` and is the whole GTK3 half of
+  hand. The generation runs under a **pinned matugen spec**: `settings.json` seeds
+  `"matugenSpec": "2025"` and `dms-colors.json` is that spec's output. The current default spec
+  derives different colors from the same wallpaper (background `#141218` vs `#0f0d12`), so a
+  baseline regenerated without the pin silently restyles every installed desktop — and a
+  `dms-colors.json` whose values disagree with the palette files is what made a host on the 2025
+  spec and a fresh install disagree on screen. `.config/gtk-3.0/gtk.css` is a symlink to `dank-colors.css` and is the whole GTK3 half of
   the chain: without it a GTK3 app (Firefox is one — `libmozgtk.so` links `libgtk-3.so.0`) loads its
   theme and never sees the palette. `gtk-4.0/gtk.css` imports the palette and nothing else; an import
   of a file nothing writes is dead config plus a parser error on every app start. What proves it:

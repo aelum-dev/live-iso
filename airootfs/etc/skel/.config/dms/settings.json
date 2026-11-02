@@ -2,6 +2,7 @@
   "currentThemeName": "dynamic",
   "currentThemeCategory": "dynamic",
   "matugenContrast": 0.5,
+  "matugenSpec": "2025",
   "hyprlandLayoutGapsOverride": 4,
   "hyprlandLayoutGapsOutOverride": 8,
   "hyprlandResizeOnBorder": true,
