@@ -161,6 +161,13 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   of a file nothing writes is dead config plus a parser error on every app start. What proves it:
   `docker/scripts/verify-installed.sh` (mode ↔ palette ↔ icon variant, on a real install) and
   `shared/aelum-color-probe.sh` (what a booted session renders with no theme applied).
+- **The player owns media; mpv is hidden by a skel override.** `~/.local/share/applications/mpv.desktop`
+  (seeded, `NoDisplay=true`, no `MimeType` line) replaces the package's entry in every launcher's view —
+  a home-local file package updates never touch, so hiding survives every mpv upgrade; the dms binary
+  honors `NoDisplay` (measured against its strings). `~/.config/mimeapps.list` defaults every type the
+  player's own desktop entry declares to `aelum.videoplayer.Player.desktop` — keep the two lists in sync
+  when the player's `MimeType` set changes. The player's `float` + `opaque` window rule (class = the
+  GTK4 app id `aelum.videoplayer.Player`) lives in the skel `hyprland.lua`, like the snapshot prompt's.
 - **`auto-scale-monitor.sh` is live-session only.** It runs from the live user's Hyprland config
   (`home/aelum/.config/hypr/hyprland.lua` and `dms/outputs.lua`), not from `/etc/skel`, so installed
   homes never start it. The installed system has no automatic monitor scaling yet — don't describe it

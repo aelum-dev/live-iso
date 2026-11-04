@@ -98,6 +98,10 @@ hl.window_rule({
 	opaque = true
 })
 hl.window_rule({ match = { class = "^(zoom)$" }, float = true })
+-- Aelum's video player: a video surface, so never tiled and never blurred or
+-- dimmed — opaque keeps the wallpaper out of the picture. The class is the
+-- GTK4 app id (StartupWMClass in its desktop entry matches).
+hl.window_rule({ match = { class = "^(aelum\\.videoplayer\\.Player)$" }, float = true, opaque = true })
 -- The snapshot-restore prompt (the installer's aelum-snapshot-prompt unit runs a
 -- Quickshell FloatingWindow titled aelum-snapshot-prompt): float it so it keeps
 -- its own card size instead of being tiled, and center it where it opens. The

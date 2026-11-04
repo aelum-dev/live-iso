@@ -1,0 +1,17 @@
+# Aelum: hides mpv from the launcher — the distro's media app is the video
+# player, mpv is the engine behind it. A copy of the same name in the user's
+# applications dir replaces the package's /usr/share/applications entry in
+# every launcher's view, and package updates never touch this file. No
+# MimeType line: media files belong to the player, in "Open with" too.
+[Desktop Entry]
+Type=Application
+Name=mpv Media Player
+GenericName=Multimedia player
+Comment=Play movies and songs
+Icon=mpv
+TryExec=mpv
+Exec=mpv --player-operation-mode=pseudo-gui -- %U
+Terminal=false
+Categories=AudioVideo;Audio;Video;Player;TV;
+StartupWMClass=mpv
+NoDisplay=true
