@@ -32,7 +32,8 @@ airootfs/
   usr/local/bin/           # aelum-installer{,-cli} (built, gitignored), aelum-snapshot-restore, theming scripts
   usr/local/share/aelum/   # squashfs mount patch, fontconfig setup
   usr/lib/initcpio/        # aelum-live boot-progress hook (both halves)
-  usr/share/aelum/         # brand assets: wallpapers, rEFInd theme (generated PNGs)
+  usr/share/aelum/         # brand assets: wallpapers, rEFInd theme (generated PNGs),
+                           # keyring/aelum-release.gpg (the [aelum] repo's signing key)
   usr/share/plymouth/themes/aelum/  # branded splash theme
 grub/  syslinux/           # boot configs (uefi.grub, bios.syslinux)
 efiboot/                   # leftover from the old systemd-boot profile — unused
@@ -50,6 +51,7 @@ Ignored after a local build: `work/`, `output/`, `airootfs/var/cache/aelum/offli
 | `etc/xdg/quickshell/aelum-snapshot/i18n/<locale>.json` | `installer/backend/scripts/gen-snapshot-prompt-i18n.go`, from the installer's `snapshot.prompt.*` translations |
 | `airootfs/usr/local/bin/aelum-installer{,-cli}` | the installer build (`docker/build-iso.sh` copies them in) |
 | `etc/skel/.config/gtk-{3.0,4.0}/dank-colors.css` + `etc/skel/.cache/dms/dms-colors.json` | Dux Shell + matugen on a desktop using the shipped wallpaper, in the mode `etc/skel/.cache/dms/dms-colors.json` is seeded in, under the `"matugenSpec"` seeded in `etc/skel/.config/dms/settings.json` — the palette comes out byte-identical for gtk-3.0 and gtk-4.0 (see "The seeded theme state is one mode") |
+| `usr/share/aelum/keyring/aelum-release.gpg` | `gpg --export 728F5F59FB2F5A88C6EE28D4930A672A3A1B5B60` (the Aelum release key). The installer copies it to the target (isocopy job) and feeds it to `pacman-key --add` + `--lsign-key` so the `[aelum]` repository verifies from the first boot — regenerate only on key rotation |
 | `images/hero-dark.png` | copy of `website/assets/desktop-control-dark.png` (2560×1440) when the site's desktop shots change |
 
 Commit the regenerated artifact in the same commit as the change that needs it. The rEFInd icon set
