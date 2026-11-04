@@ -87,6 +87,10 @@ breeze
 #   qt6-multimedia  - shell sound effects; not part of the Aelum desktop
 #   wtype           - 2.0 pastes the clipboard through zwp_virtual_keyboard_v1
 
+# Aelum applications
+# from the [aelum] repo; the build resolves it and bakes it into the mirror
+aelum-video-player
+
 # GPU drivers
 vulkan-radeon
 vulkan-intel

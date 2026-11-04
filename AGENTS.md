@@ -13,8 +13,10 @@ system* (`/mnt/*` + `arch-chroot` = the target, `/dev/*` + direct exec = the liv
 
 ```
 profiledef.sh              # ISO name/label/version, bootmodes, squashfs options, file_permissions
-packages.x86_64            # official packages in the live session
-packages.aur.x86_64        # AUR packages built into the offline mirror
+packages.x86_64            # packages in the live session (official + aelum-video-player, which the
+                           # build resolves from the [aelum] repo and bakes into the mirror)
+packages.aur.x86_64        # AUR packages built into the offline mirror (not installed in the live
+                           # session — mkarchiso reads only packages.x86_64)
 bootstrap_packages         # bootstrap environment
 pacman-offline.conf        # pacman config mkarchiso itself uses (blank DB + offline mirror)
 airootfs/
@@ -77,6 +79,13 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   /etc/pacman.d/mirrorlist`). The offline mirror is install-time only — installed systems update from
   normal mirrors. Anything that must add a repo to an installed system has to be **written by the
   installer**, not shipped from `airootfs`.
+- **`[aelum]` is not in `pacman-offline.conf`, on purpose.** The distro's own repository is resolved
+  by the *build* (`docker/scripts/build-iso.sh`: a generated `Include = /etc/pacman.conf` + `[aelum]`
+  config, `SigLevel = Never` scoped to that repo) and the resolved packages are baked into the offline
+  mirror before `mkarchiso` runs. So `aelum-video-player` reaches the live session through
+  `[aelum-offline]` like every other package, and mkarchiso stays strictly on the mirror: a live
+  session holding a newer version than the mirror carries is the silent bug this avoids. If the repo
+  is unreachable, the build fails loudly instead of quietly shipping without the package.
 - **Squashfs is zstd `-Xcompression-level 19 -b 1M`, on purpose.** The kernel decodes one xz stream
   per block on a single core; zstd is roughly an order of magnitude faster per core, and the live ISO
   mounts the image with `threads=percpu` (`etc/pacman.d/hooks/50-aelum-squashfs-threads.hook`,
