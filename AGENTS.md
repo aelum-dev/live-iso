@@ -168,8 +168,11 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   a home-local file package updates never touch, so hiding survives every mpv upgrade; the dms binary
   honors `NoDisplay` (measured against its strings). `~/.config/mimeapps.list` defaults every type the
   player's own desktop entry declares to `aelum.videoplayer.Player.desktop` — keep the two lists in sync
-  when the player's `MimeType` set changes. The player's `float` + `opaque` window rule (class = the
-  GTK4 app id `aelum.videoplayer.Player`) lives in the skel `hyprland.lua`, like the snapshot prompt's.
+  when the player's `MimeType` set changes. The player's `float` + `opaque` + `keep_aspect_ratio` window
+  rule (class = the GTK4 app id `aelum.videoplayer.Player`) lives in the skel `hyprland.lua`, like the
+  snapshot prompt's. The compositor locks the **window's** ratio — the box, header bar and playback bar
+  included — so the video area keeps a slightly different one; an app-side lock would have to read the
+  chrome heights.
 - **`auto-scale-monitor.sh` is live-session only.** It runs from the live user's Hyprland config
   (`home/aelum/.config/hypr/hyprland.lua` and `dms/outputs.lua`), not from `/etc/skel`, so installed
   homes never start it. The installed system has no automatic monitor scaling yet — don't describe it
