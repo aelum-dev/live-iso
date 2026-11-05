@@ -88,8 +88,9 @@ breeze
 #   wtype           - 2.0 pastes the clipboard through zwp_virtual_keyboard_v1
 
 # Aelum applications
-# from the [aelum] repo; the build resolves it and bakes it into the mirror
+# from the [aelum] repo; the build resolves them and bakes them into the mirror
 aelum-video-player
+aelum-package-installer
 
 # GPU drivers
 vulkan-radeon

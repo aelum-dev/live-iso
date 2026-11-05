@@ -13,7 +13,8 @@ system* (`/mnt/*` + `arch-chroot` = the target, `/dev/*` + direct exec = the liv
 
 ```
 profiledef.sh              # ISO name/label/version, bootmodes, squashfs options, file_permissions
-packages.x86_64            # packages in the live session (official + aelum-video-player, which the
+packages.x86_64            # packages in the live session (official + the distro's own apps,
+                           # aelum-video-player and aelum-package-installer, which the
                            # build resolves from the [aelum] repo and bakes into the mirror)
 packages.aur.x86_64        # AUR packages built into the offline mirror (not installed in the live
                            # session — mkarchiso reads only packages.x86_64)
@@ -82,7 +83,8 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
 - **`[aelum]` is not in `pacman-offline.conf`, on purpose.** The distro's own repository is resolved
   by the *build* (`docker/scripts/build-iso.sh`: a generated `Include = /etc/pacman.conf` + `[aelum]`
   config, `SigLevel = Never` scoped to that repo) and the resolved packages are baked into the offline
-  mirror before `mkarchiso` runs. So `aelum-video-player` reaches the live session through
+  mirror before `mkarchiso` runs. So the distro's own apps (`aelum-video-player`,
+  `aelum-package-installer`) reach the live session through
   `[aelum-offline]` like every other package, and mkarchiso stays strictly on the mirror: a live
   session holding a newer version than the mirror carries is the silent bug this avoids. If the repo
   is unreachable, the build fails loudly instead of quietly shipping without the package.
