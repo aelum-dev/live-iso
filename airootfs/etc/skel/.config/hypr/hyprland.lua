@@ -102,6 +102,9 @@ hl.window_rule({ match = { class = "^(zoom)$" }, float = true })
 -- dimmed — opaque keeps the wallpaper out of the picture. The class is the
 -- GTK4 app id (StartupWMClass in its desktop entry matches).
 hl.window_rule({ match = { class = "^(aelum\\.videoplayer\\.Player)$" }, float = true, opaque = true })
+-- Aelum's package manager: a list/detail window, so float it rather than tile it
+-- into the workspace it was opened from. The class is the GTK4 app id.
+hl.window_rule({ match = { class = "^(aelum\\.packageinstaller\\.Packages)$" }, float = true })
 -- The snapshot-restore prompt (the installer's aelum-snapshot-prompt unit runs a
 -- Quickshell FloatingWindow titled aelum-snapshot-prompt): float it so it keeps
 -- its own card size instead of being tiled, and center it where it opens. The
