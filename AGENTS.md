@@ -13,13 +13,21 @@ system* (`/mnt/*` + `arch-chroot` = the target, `/dev/*` + direct exec = the liv
 
 ```
 profiledef.sh              # ISO name/label/version, bootmodes, squashfs options, file_permissions
-packages.x86_64            # packages in the live session (official + the distro's own apps,
-                           # aelum-video-player and aelum-package-installer, which the
-                           # build resolves from the [aelum] repo and bakes into the mirror)
+packages.x86_64            # what the live session *is*: its kernel and boot entries, the tools the
+                           # installer runs here (partition/format/LUKS/LVM/snapper, rEFInd's assets,
+                           # efibootmgr), the session the installer draws in (hyprland, greetd,
+                           # webkit2gtk), its terminal, and the fonts its 28-language UI renders.
+                           # NOT the desktop the installer writes — that set lives in the installer's
+                           # own lists, and the build reads those too (see the mirror note below).
 packages.aur.x86_64        # AUR packages built into the offline mirror (not installed in the live
                            # session — mkarchiso reads only packages.x86_64)
 bootstrap_packages         # bootstrap environment
 pacman-offline.conf        # pacman config mkarchiso itself uses (blank DB + offline mirror)
+                           # The mirror = closure(packages.x86_64 ∪ the installer's own lists, from
+                           # `go run ./backend/scripts/pkg-list.go` ∪ packages.aur.x86_64). A package
+                           # only the installed system needs (base-devel, firefox, dux-shell, the
+                           # distro's apps) belongs in those lists and reaches the mirror from there;
+                           # a package the installer *runs* must stay in packages.x86_64.
 airootfs/
   etc/greetd/              # greetd + Hyprland autostart → the installer
   etc/mkinitcpio.conf.d/   # live-ISO hooks (kms, aelum-live, …)

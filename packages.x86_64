@@ -1,4 +1,24 @@
-# Base system
+# What the live session is: a host that boots, displays the installer and
+# installs. It is not a copy of the desktop the installer writes — the desktop
+# set lives in the installer's own lists (installer/backend/install/{installbase,
+# installdesktop}) and the ISO build reads them too
+# (docker/scripts/build-iso.sh → `go run ./backend/scripts/pkg-list.go`), so the
+# offline mirror holds the union of this file and those lists.
+#
+# Two consequences for anyone editing this:
+#   - A package only the *installed* system needs belongs in the installer's
+#     lists, not here. It reaches the mirror from there, and an install gets it
+#     without network. (That is where base-devel, firefox, dux-shell, mpv and
+#     the distro's own apps live.)
+#   - A package the installer *runs* has to stay here, because it runs in this
+#     session: formatting, encrypting, snapshotting, registering the firmware
+#     entry, and copying rEFInd's assets out of /usr/share/refind.
+#
+# What is left is what that takes.
+
+# Base system — the live session's own kernel, initramfs and boot entries.
+# syslinux/grub are the profile's bootmodes; edk2-shell and memtest86+-efi are
+# the UEFI shell and memory-test entries the boot menu offers.
 base
 linux-lts
 linux-firmware
@@ -12,102 +32,70 @@ memtest86+-efi
 syslinux
 grub
 
-# Utilities
+# The tools the installer runs here, against the disk it is writing.
 util-linux
 gptfdisk
 parted
 dosfstools
 e2fsprogs
 btrfs-progs
-btrfs-assistant
-snapper
 lvm2
 cryptsetup
+snapper
 pv
-plymouth
-jq
 
-# System
-sudo
-greetd
-greetd-agreety
-uwsm
-brightnessctl
-ddcutil
-bluez
-power-profiles-daemon
-zram-generator
-lsof
-
-# Editor
-vim
-nano
-
-# Bootloader
-# refind is installed into the target system (the installer copies its EFI
-# binary and icons onto the Boot partition); efibootmgr lets the installer
-# register rEFInd in the firmware's boot order.
+# Bootloader. The installer copies rEFInd's EFI binary and icons out of this
+# session's /usr/share/refind, so the package has to be installed here, not
+# only in the mirror; efibootmgr registers it in the firmware's boot order.
 refind
 efibootmgr
 
-# Network
+# The splash whose bar tracks real mount milestones (the aelum-live hook), and
+# the live user's passwordless sudo.
+plymouth
+sudo
+
+# The session the installer draws in. webkit2gtk-4.1 is the installer GUI's
+# runtime (it pulls gtk3); hyprpaper shows the brand wallpaper behind it.
+hyprland
+greetd
+greetd-agreety
+webkit2gtk-4.1
+hyprpaper
+adwaita-cursors
+
+# A terminal beside the installer: the live Hyprland config binds Super+Return
+# to kitty and keeps its palette in step with the installer's light/dark
+# toggle (aelum-theme-watch.sh), and its config asks for JetBrains Mono.
+kitty
+ttf-jetbrains-mono
+nano
+
+# Small things the live session itself uses: the display's brightness
+# (brightnessctl / ddcutil — there is nothing else to reach them with during an
+# install), compressed RAM for the pacstrap phase, and jq for the live scripts.
+brightnessctl
+ddcutil
+zram-generator
+jq
+
+# Network — not needed to install (every package comes from the embedded
+# mirror), but an install usually wants to be able to update afterwards, and a
+# live session with no network cannot even fetch a PKGBUILD.
 networkmanager
 iwd
 wireless-regdb
 
-# Desktop
-btop
-fastfetch
-hyprland
-hyprpaper
-# dux-shell is DMS 2.0 (renamed from dms-shell); dux-gop is Dux GOP (renamed
-# from dgop). Both Provides/Replaces/Conflicts the old names, so an existing
-# install upgrades in place.
-dux-shell
-noto-fonts
-adwaita-cursors
-kitty
-webkit2gtk-4.1
-cava
-dux-gop
-matugen
-nautilus
-firefox
-adw-gtk-theme
-mpv
-imv
-gnome-text-editor
-breeze
+# The live session's SSH. This profile enables sshd.service and drops in
+# /etc/ssh/sshd_config.d/10-archiso.conf for it (root, empty password), and the
+# whole QEMU harness drives the guest through it (host 2222 → guest 22):
+# test-install.sh waits for sshd before it starts, and verify-installed.sh runs
+# inside the guest over SSH. openssh used to arrive as a dependency of gcr-4,
+# which is precisely the accident an explicit list exists to prevent: the
+# enabled unit and the config file stayed, the package did not.
+openssh
 
-
-# dux-shell's other optional dependencies are deliberately not shipped:
-#   cups-pk-helper  - no CUPS in this image, so there is no printer to manage
-#   i2c-tools       - external-monitor brightness already goes through ddcutil
-#   qt6ct           - Qt theming goes through qtengine (QT_QPA_PLATFORMTHEME)
-#   qt6-multimedia  - shell sound effects; not part of the Aelum desktop
-#   wtype           - 2.0 pastes the clipboard through zwp_virtual_keyboard_v1
-
-# Aelum applications
-# from the [aelum] repo; the build resolves them and bakes them into the mirror
-aelum-video-player
-aelum-package-installer
-
-# GPU drivers
-vulkan-radeon
-vulkan-intel
-vulkan-nouveau
-
-# Fonts
+# The fonts the installer's own UI renders: all 28 of its languages. Its icons
+# are a woff2 subset embedded in its CSS, so no system icon font is needed.
 noto-fonts
 noto-fonts-cjk
-noto-fonts-emoji
-terminus-font
-ttf-jetbrains-mono
-ttf-jetbrains-mono-nerd
-
-# Audio
-pipewire
-pipewire-pulse
-pipewire-alsa
-pipewire-jack
-wireplumber
