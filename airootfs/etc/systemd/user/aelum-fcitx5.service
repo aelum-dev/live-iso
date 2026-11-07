@@ -15,13 +15,13 @@
 # fcitx5 itself, and the gate fails on its own there - the same shape that keeps
 # the snapshot prompt inert in the live session, with no per-home mask needed.
 #
-# The client half of the wiring is in the seeded Hyprland config: GTK_IM_MODULE,
-# QT_IM_MODULE and XMODIFIERS are set there, and the session's
-# dbus-update-activation-environment call propagates them. A first-run fcitx5
-# registers whatever input method engines are installed - the installer's
-# language table (installdesktop/inputmethods.go) decides which those are, and
-# an install for a language typed through keyboard layouts runs the core alone -
-# and Ctrl+Space switches between the input methods.
+# The client half of the wiring is in the seeded Hyprland config: QT_IM_MODULE and
+# XMODIFIERS are set there, and the session's dbus-update-activation-environment
+# call propagates them. The input methods themselves are configured rather than
+# discovered: the installer writes /etc/xdg/fcitx5/profile (language engine +
+# location keyboard layout, English first) and ships /etc/xdg/fcitx5/config, which
+# puts the switch on Alt+Shift. Both are read from the system config directory
+# until a person changes anything and the framework saves its own copy in the home.
 
 [Unit]
 Description=Aelum: Fcitx5 input method framework

@@ -36,11 +36,14 @@ airootfs/
   etc/pacman.d/hooks/      # squashfs mount threads, fontconfig cache, hook cleanup
   etc/polkit-1/            # snapshot-restore action + rule
   etc/plymouth/            # splash daemon config
-  etc/quickshell/aelum-snapshot/   # snapshot-boot restore dialog + generated i18n/
+  etc/xdg/quickshell/aelum-snapshot/   # snapshot-boot restore dialog + generated i18n/
   etc/skel/                # what every new home is seeded from (dms, hypr, kitty, systemd user units)
   etc/systemd/             # system units (live boot progress) + user units (snapshot prompt,
                            # input method framework — the fcitx5 unit is inert in the live
                            # session by its own gate, see below)
+  etc/xdg/fcitx5/          # config: the framework's Alt+Shift switch key, copied to the target by
+                           # an isocopy job (the profile beside it is written by the installer's
+                           # configure step, never shipped from here)
   home/aelum/              # live user's home, incl. the dms.service mask
   usr/local/bin/           # aelum-installer{,-cli} (built, gitignored), aelum-snapshot-restore, theming scripts
   usr/local/share/aelum/   # squashfs mount patch, fontconfig setup
@@ -136,6 +139,18 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   no `root` snapper config — so do not "fix" the live session by running them. What proves them:
   `docker/scripts/fake-snapshot-restore.sh` (host, stubs, no root) and `docker/scripts/verify-installed.sh`,
   which byte-compares the installed copies against these files after a real install.
+- **The input method framework's key is here, and it is the only owner of Alt+Shift.**
+  `etc/xdg/fcitx5/config` names the switch key (`Alt+Shift_L`/`Alt+Shift_R` — the *keysym* spelling,
+  because fcitx 5.1.23's `Key::Key` only recognises `"Shift+"` with a trailing plus and parses a
+  bare trailing `Shift` as Alt alone) and is carried into every target by an Optional isocopy job,
+  like the `aelum-fcitx5.service` beside it. The seeded `hyprland.lua` therefore carries **no**
+  `kb_options = "grp:alt_shift_toggle"`: a keyboard layout is an input method to this framework
+  (`keyboard-<layout>`), so the compositor and the framework would move two things on one press.
+  Keep `kb_layout = "us"` — it is what the greeter (no framework) and a switched-off context type
+  with, and it matches the profile's first entry. The *list* of input methods is not here:
+  the installer writes `etc/xdg/fcitx5/profile` into the target from the install's own language +
+  location (`configure/inputmethod.go`); this directory is read only as the fallback after
+  `~/.config/fcitx5`, so a person's own changes win from the moment they make any.
 - **rEFInd is per-install.** The installer copies `usr/share/aelum/refind/themes/aelum` to
   `EFI/refind/themes/aelum` and includes it from `refind.conf`; each install then writes its own
   `EFI/refind/aelum/<id>.conf` (plus `<id>-snapshots.conf` on btrfs) and keeps its kernel and

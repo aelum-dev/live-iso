@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: GPL-3.0
+#
+# Aelum's defaults for the Fcitx5 input method framework.
+#
+# The installer copies this file into the installed system (install/isocopy); the
+# live session never reads it - it carries no fcitx5 at all. The list of input
+# methods the key switches between is a separate file, profile beside this one,
+# which the configure step writes from the language and location the install was
+# given.
+#
+# Alt+Shift switches input methods. It is spelled with the Shift *keysym* because
+# that is what the framework's parser reads: Key::Key in 5.1.23 looks for "Shift+"
+# with a trailing plus, so the bare word at the end of "Alt+Shift" is dropped and
+# the result is Alt alone, and a key with no keysym at all cannot be written in
+# this file (Key::toString returns the empty string for one). Both Shift keys are
+# listed so the key works from either hand.
+#
+# The Hangul and Zenkaku_Hankaku entries are upstream's own, repeated here because
+# naming TriggerKeys replaces the whole list: they are the physical Hangul/Eng and
+# 半角/全角 keys on Korean and Japanese keyboards, and dropping them would take a
+# key away from exactly the machines that have it.
+#
+# Ctrl+Space moves from the toggle to enumerate. Toggling reaches English and the
+# engine - that is the pair Alt+Shift is for - and on a Japanese or Korean install,
+# which has its own keyboard as well, cycling is the only way to reach the keyboard.
+#
+# Nothing else is listed: fcitx5 loads this file on top of its own defaults and an
+# option it does not find keeps the value it had, so every other setting stays what
+# upstream ships - including Shift alone as the temporary switch.
+
+[Hotkey/TriggerKeys]
+0=Alt+Shift_L
+1=Alt+Shift_R
+2=Zenkaku_Hankaku
+3=Hangul
+
+[Hotkey/EnumerateForwardKeys]
+0=Control+space
