@@ -207,6 +207,16 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   entry and adds `Hidden=true`, the spec's way of turning one autostart entry off, so
   `aelum-fcitx5.service` stays its only owner. Do not move that one into `hiddenApps` — the list
   filters the menu, never what a session starts.
+- **The seeded session state is a baseline; the installer sets two keys of its copy
+  in the target.** `etc/skel/.local/state/dms/session.json` is source here like every other
+  skel file, and it ships no weather keys at all (Dux Shell's own default is New York). The
+  Welcome page's location answer names a country and the weather widget needs a place, so the
+  installed copy gets `weatherLocation`/`weatherCoordinates` for that country's capital
+  (`installer/shared.WeatherByISO`), written by `installer/install/users/weather.go` between
+  the copy and `useradd -m` — Dux Shell keeps that state in the home with no system-side
+  copy, and a home is seeded out of the skeleton, so the skeleton is where a value every
+  account should start with belongs. Nothing else in the file is touched.
+  `verify-installed.sh` holds the installed copy against the location the install ran with.
 - **The player owns media.** `~/.config/mimeapps.list` defaults every type the player's own desktop
   entry declares to `aelum.videoplayer.Player.desktop` — keep the two lists in sync when the player's
   `MimeType` set changes. The player's entry carries `Keywords=…;mpv;`, so an `mpv` search in the
