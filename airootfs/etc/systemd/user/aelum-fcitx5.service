@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: GPL-3.0
+#
+# Start the Fcitx5 input method framework in every desktop session.
+#
+# This unit ships in the live ISO and the installer copies it into the installed
+# system (install/isocopy). It is system-side (/etc/systemd/user, a load path of
+# every user manager) so every account runs it, but it is pulled in per-home: the
+# wants link seeded into ~/.config/systemd/user/hyprland-session.target.wants/ by
+# /etc/skel - the same mechanism that starts dms.service and the snapshot-restore
+# prompt - starts it in real user sessions only. The greeter runs a Hyprland
+# session too and has no seeded home, so it is not asked.
+#
+# The ConditionPathExists gate is what keeps the live session out of this: the
+# live image carries the unit (it is the source the installer copies) but not
+# fcitx5 itself, and the gate fails on its own there - the same shape that keeps
+# the snapshot prompt inert in the live session, with no per-home mask needed.
+#
+# The client half of the wiring is in the seeded Hyprland config: GTK_IM_MODULE,
+# QT_IM_MODULE and XMODIFIERS are set there, and the session's
+# dbus-update-activation-environment call propagates them. A first-run fcitx5
+# registers whatever input method engines are installed - the installer's
+# language table (installdesktop/inputmethods.go) decides which those are, and
+# an install for a language typed through keyboard layouts runs the core alone -
+# and Ctrl+Space switches between the input methods.
+
+[Unit]
+Description=Aelum: Fcitx5 input method framework
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+ConditionPathExists=/usr/bin/fcitx5
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/fcitx5
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=hyprland-session.target

@@ -18,7 +18,10 @@
     "bssh",
     "bvnc",
     "assistant",
-    "qv4l2"
+    "qv4l2",
+    "org.fcitx.fcitx5-migrator",
+    "kbd-layout-viewer5",
+    "mpv"
   ],
   "configVersion": 7
 }

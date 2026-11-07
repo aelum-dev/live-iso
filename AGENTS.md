@@ -38,7 +38,9 @@ airootfs/
   etc/plymouth/            # splash daemon config
   etc/quickshell/aelum-snapshot/   # snapshot-boot restore dialog + generated i18n/
   etc/skel/                # what every new home is seeded from (dms, hypr, kitty, systemd user units)
-  etc/systemd/             # system units (live boot progress) + user units (snapshot prompt)
+  etc/systemd/             # system units (live boot progress) + user units (snapshot prompt,
+                           # input method framework — the fcitx5 unit is inert in the live
+                           # session by its own gate, see below)
   home/aelum/              # live user's home, incl. the dms.service mask
   usr/local/bin/           # aelum-installer{,-cli} (built, gitignored), aelum-snapshot-restore, theming scripts
   usr/local/share/aelum/   # squashfs mount patch, fontconfig setup
@@ -121,7 +123,10 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   `home/aelum/.config/systemd/user/dms.service` is an **empty file**, i.e. masked: the wants link
   stays, the unit cannot start, and the target still reaches `graphical-session.target` (what
   xdg-desktop-portal needs). The seeded `aelum-snapshot-prompt.service` link is deliberately *not*
-  masked — its `ConditionPathExists` gate fails on its own there. Installed homes come from
+  masked — its `ConditionPathExists` gate fails on its own there. The seeded
+  `aelum-fcitx5.service` link is not masked either: its `ConditionPathExists=/usr/bin/fcitx5`
+  gate fails in the live session because the live image carries the unit (it is the source the
+  installer's isocopy job copies) but not the package. Installed homes come from
   `/etc/skel`, which carries no mask.
 - **The snapshot-restore path is source here, not installer output.** `usr/local/bin/aelum-snapshot-restore`,
   the polkit policy + `wheel`-member rule, `etc/xdg/quickshell/aelum-snapshot/shell.qml` (+ its i18n),
@@ -171,16 +176,32 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   of a file nothing writes is dead config plus a parser error on every app start. What proves it:
   `docker/scripts/verify-installed.sh` (mode ↔ palette ↔ icon variant, on a real install) and
   `shared/aelum-color-probe.sh` (what a booted session renders with no theme applied).
-- **The player owns media; mpv is hidden by a skel override.** `~/.local/share/applications/mpv.desktop`
-  (seeded, `NoDisplay=true`, no `MimeType` line) replaces the package's entry in every launcher's view —
-  a home-local file package updates never touch, so hiding survives every mpv upgrade; the dms binary
-  honors `NoDisplay` (measured against its strings). `~/.config/mimeapps.list` defaults every type the
-  player's own desktop entry declares to `aelum.videoplayer.Player.desktop` — keep the two lists in sync
-  when the player's `MimeType` set changes. The player's `float` + `opaque` + `keep_aspect_ratio` window
-  rule (class = the GTK4 app id `aelum.videoplayer.Player`) lives in the skel `hyprland.lua`, like the
-  snapshot prompt's. The compositor locks the **window's** ratio — the box, header bar and playback bar
-  included — so the video area keeps a slightly different one; an app-side lock would have to read the
-  chrome heights.
+- **Menu hiding has one mechanism: the `hiddenApps` list.** The Dux Shell launcher has no other
+  filter that works on packaged entries — it lists entries in system directories whatever they carry
+  (measured: fcitx5-config-qt's own `NoDisplay=true` entry is listed), and honors `NoDisplay` only for
+  a same-named copy in the user's own applications dir. A `/usr/local/share` desktop override does
+  *not* work either — the higher-priority-dir trick still leaves a system-dir copy, which is listed
+  regardless (measured). So every entry Aelum has no use for is hidden **by id** (the desktop file's
+  basename minus `.desktop`) in the `hiddenApps` list seeded in `~/.local/state/dms/session.json`,
+  and the settings card can show any of them again with one click. No desktop-entry overrides: one
+  list, one mechanism. That list carries the Qt/KDE tool debris that arrives as dependencies (btop,
+  linguist, designer, qvidcap, …), the two fcitx5-configtool entries with no use on Aelum — the
+  Migration Wizard (there is no Fcitx 4 to import from) and the Keyboard layout viewer — and `mpv`,
+  the engine the player is built on (measured: no mpv entry in a real menu). Autostart is **not** this
+  mechanism and has no list: `~/.config/autostart/org.fcitx.Fcitx5.desktop` mirrors the packaged
+  entry and adds `Hidden=true`, the spec's way of turning one autostart entry off, so
+  `aelum-fcitx5.service` stays its only owner. Do not move that one into `hiddenApps` — the list
+  filters the menu, never what a session starts.
+- **The player owns media.** `~/.config/mimeapps.list` defaults every type the player's own desktop
+  entry declares to `aelum.videoplayer.Player.desktop` — keep the two lists in sync when the player's
+  `MimeType` set changes. The player's entry carries `Keywords=…;mpv;`, so an `mpv` search in the
+  launcher answers with the player (measured). The mpv package's entry is left exactly as shipped:
+  its own `MimeType` set means it still appears in "Open with" lists, where the defaults above make
+  the player the handler. The player's `float` + `opaque` + `keep_aspect_ratio` window rule
+  (class = the GTK4 app id `aelum.videoplayer.Player`) lives in the skel `hyprland.lua`, like the
+  snapshot prompt's. The compositor locks the **window's** ratio — the box, header bar and playback
+  bar included — so the video area keeps a slightly different one; an app-side lock would have to
+  read the chrome heights.
 - **`auto-scale-monitor.sh` is live-session only.** It runs from the live user's Hyprland config
   (`home/aelum/.config/hypr/hyprland.lua` and `dms/outputs.lua`), not from `/etc/skel`, so installed
   homes never start it. The installed system has no automatic monitor scaling yet — don't describe it
