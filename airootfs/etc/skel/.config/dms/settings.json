@@ -50,10 +50,6 @@
         "clock",
         "weather",
         {
-          "id": "keyboard_layout_name",
-          "enabled": true
-        },
-        {
           "id": "systemUpdate",
           "enabled": true,
           "hideWhenIdle": true
