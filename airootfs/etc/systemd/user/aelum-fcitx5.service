@@ -33,7 +33,16 @@ ConditionPathExists=/usr/bin/fcitx5
 [Service]
 Type=simple
 ExecStart=/usr/bin/fcitx5
-Restart=on-failure
+# always, not on-failure: the tray's "Restart" is exit(0) plus a forked
+# `fcitx5 -r` replacement (src/server/main.cpp), and the unit's own stop kills
+# that child with the cgroup - on-failure never sees a failure there and the
+# session is simply left without an input method. The same clean exit 0 happens
+# when another instance already owns org.fcitx.Fcitx5 (a D-Bus-activated stray,
+# e.g. opened by fcitx5-configtool): kill the stray before restarting the unit,
+# or the respawned instance exits on arrival and this becomes a restart loop.
+# Tray "Exit" respawns under this rule as well - the framework is a permanent
+# part of the session, like the shell units beside it.
+Restart=always
 RestartSec=1
 
 [Install]
