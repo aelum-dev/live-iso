@@ -344,13 +344,18 @@ Scope {
 
     color: "transparent"
 
+    // The card owns no border: it is a normal window, and the frame around it is the
+    // compositor's — Hyprland's border, themed with the same DMS palette (col.active_border).
+    // The card's radius must stay at or under the seeded decoration.rounding: the
+    // compositor clips the surface to its rounding curve and draws its border along it, and
+    // a rounder card pulls away from that curve at the corners — the transparent wedge
+    // there reads as a second, offset outline (measured: an 18px card under a 12px frame).
+    // A failed restore is named by its error-colored text, not by a red ring.
     Rectangle {
       id: card
       anchors.fill: parent
-      radius: 18
+      radius: 12
       color: prompt.color("surface_container")
-      border.color: prompt.phase === "failed" ? prompt.color("error") : prompt.color("primary")
-      border.width: 2
       focus: true
 
       // Right-to-left locales: the whole layout mirrors, so the footer reaches for
