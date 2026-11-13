@@ -3,7 +3,7 @@
 -------------------
 
 -- Set programs that you use
-local terminal    = "kitty"
+local terminal    = "foot"
 
 -------------------
 ---- AUTOSTART ----
@@ -14,7 +14,7 @@ local terminal    = "kitty"
 
 hl.on("hyprland.start", function ()
      hl.exec_cmd("hyprpaper")
-     -- Keep the live kitty palette in step with the installer's light/dark
+     -- Keep the live foot palette in step with the installer's light/dark
      -- toggle by watching the active hyprpaper wallpaper.
      hl.exec_cmd("/usr/local/bin/aelum-theme-watch.sh")
      -- Scale the monitor BEFORE the installer maps its window. The installer is

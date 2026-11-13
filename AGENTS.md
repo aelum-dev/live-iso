@@ -37,7 +37,7 @@ airootfs/
   etc/polkit-1/            # snapshot-restore action + rule
   etc/plymouth/            # splash daemon config
   etc/xdg/quickshell/aelum-snapshot/   # snapshot-boot restore dialog + generated i18n/
-  etc/skel/                # what every new home is seeded from (dms, hypr, kitty, systemd user units)
+  etc/skel/                # what every new home is seeded from (dms, foot, hypr, systemd user units)
   etc/systemd/             # system units (live boot progress) + user units (snapshot prompt,
                            # input method framework — the fcitx5 unit is inert in the live
                            # session by its own gate, see below)
@@ -67,6 +67,7 @@ Ignored after a local build: `work/`, `output/`, `airootfs/var/cache/aelum/offli
 | `etc/xdg/quickshell/aelum-snapshot/i18n/<locale>.json` | `installer/backend/scripts/gen-snapshot-prompt-i18n.go`, from the installer's `snapshot.prompt.*` translations |
 | `airootfs/usr/local/bin/aelum-installer{,-cli}` | the installer build (`docker/build-iso.sh` copies them in) |
 | `etc/skel/.config/gtk-{3.0,4.0}/dank-colors.css` + `etc/skel/.cache/dms/dms-colors.json` | Dux Shell + matugen on a desktop using the shipped wallpaper, in the mode `etc/skel/.cache/dms/dms-colors.json` is seeded in, under the `"matugenSpec"` seeded in `etc/skel/.config/dms/settings.json` — the palette comes out byte-identical for gtk-3.0 and gtk-4.0 (see "The seeded theme state is one mode") |
+| `etc/skel/.config/foot/dank-colors.ini` | Dux Shell's own terminal palette: the matugen template `matugen/templates/foot.ini`, written to `~/.config/foot/dank-colors.ini` by the same generation run that writes the two palette files above, switched on by `"matugenTemplateFoot": true` + `"terminalPalette": "high"` in `etc/skel/.config/dms/settings.json`. Same wallpaper, mode and pinned spec as those files — its `background`/`foreground` are the seeded scheme's and its ANSI ramp is that scheme's `terminalPalette: "high"` variant, which is why it is not a copy of the `dank16` block. Regenerate it in the same pass as the palette files: one from another wallpaper is the same first-boot mismatch described below |
 | `usr/share/aelum/keyring/aelum-release.gpg` | `gpg --export 728F5F59FB2F5A88C6EE28D4930A672A3A1B5B60` (the Aelum release key). The installer copies it to the target (isocopy job) and feeds it to `pacman-key --add` + `--lsign-key` so the `[aelum]` repository verifies from the first boot — regenerate only on key rotation |
 | `images/hero-dark.png` | copy of `website/assets/desktop-control-dark.png` (2560×1440) when the site's desktop shots change |
 
@@ -168,18 +169,21 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   force-installs it from addons.mozilla.org by add-on ID (`uBlock0@raymondhill.net`) on first launch, so
   nothing is bundled in the ISO and the add-on needs the network the first time Firefox runs. The same
   file locks `widget.gtk.libadwaita-colors.enabled` off so GTK apps keep the matugen palette.
-- **The seeded theme state is one mode, in five files.** Nothing in an installed session puts a
+- **The seeded theme state is one mode, in six files.** Nothing in an installed session puts a
   palette into GTK before Dux Shell has applied one, so what `etc/skel` and the copied dconf
   keyfiles leave behind is what the first app of the first session sees. The files that name that
   state: `.cache/dms/dms-colors.json` (`"mode"`), `.config/gtk-3.0/dank-colors.css` and
-  `.config/gtk-4.0/dank-colors.css` (the palette GTK reads), `.config/gtk-{3.0,4.0}/settings.ini`
+  `.config/gtk-4.0/dank-colors.css` (the palette GTK reads), `.config/foot/dank-colors.ini` (the
+  palette foot reads — the same generation pass, which is why `settings.json` seeds
+  `"matugenTemplateFoot": true` + `"terminalPalette": "high"`), `.config/gtk-{3.0,4.0}/settings.ini`
   and `etc/dconf/db/local.d/01-icons` (the icon variant), and `etc/dconf/db/local.d/03-dark-theme`
   (`gtk-theme` + `color-scheme`, which is what GTK4, libadwaita and the settings portal read —
   copied to the target too; Dux Shell writes the same keys per mode into the user database, and the
   user database wins, so switching the mode still overrides it). A light palette under a dark seeded
   mode is what made a first-start Firefox render plain Adwaita until the mode was switched.
-  The two palette files are **Dux Shell's own output** — regenerate them from a Dux Shell desktop
-  running that mode (they come out byte-identical for gtk-3.0 and gtk-4.0), never write one by
+  The palette files are **Dux Shell's own output** — regenerate them from a Dux Shell desktop
+  running that mode (the two CSS files come out byte-identical for gtk-3.0 and gtk-4.0; the foot
+  one is the `foot.ini` matugen template's output, so it differs by design), never write one by
   hand. The generation runs under a **pinned matugen spec**: `settings.json` seeds
   `"matugenSpec": "2025"` and `dms-colors.json` is that spec's output. The current default spec
   derives different colors from the same wallpaper (background `#141218` vs `#0f0d12`), so a
@@ -189,7 +193,8 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   the chain: without it a GTK3 app (Firefox is one — `libmozgtk.so` links `libgtk-3.so.0`) loads its
   theme and never sees the palette. `gtk-4.0/gtk.css` imports the palette and nothing else; an import
   of a file nothing writes is dead config plus a parser error on every app start. What proves it:
-  `docker/scripts/verify-installed.sh` (mode ↔ palette ↔ icon variant, on a real install) and
+  `docker/scripts/verify-installed.sh` (mode ↔ palette ↔ terminal palette ↔ icon variant, on a
+  real install) and
   `shared/aelum-color-probe.sh` (what a booted session renders with no theme applied).
 - **Menu hiding has one mechanism: the `hiddenApps` list.** The Dux Shell launcher has no other
   filter that works on packaged entries — it lists entries in system directories whatever they carry
@@ -201,7 +206,9 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   and the settings card can show any of them again with one click. No desktop-entry overrides: one
   list, one mechanism. That list carries the Qt/KDE tool debris that arrives as dependencies (btop,
   linguist, designer, qvidcap, …), the two fcitx5-configtool entries with no use on Aelum — the
-  Migration Wizard (there is no Fcitx 4 to import from) and the Keyboard layout viewer — and `mpv`,
+  Migration Wizard (there is no Fcitx 4 to import from) and the Keyboard layout viewer — the two extra
+  entries the terminal package ships (`foot-server`, the daemon, and `footclient`, a window in a running
+  daemon: Aelum starts plain `foot`, so only `foot` is a thing a person could launch), and `mpv`,
   the engine the player is built on (measured: no mpv entry in a real menu). Autostart is **not** this
   mechanism and has no list: `~/.config/autostart/org.fcitx.Fcitx5.desktop` mirrors the packaged
   entry and adds `Hidden=true`, the spec's way of turning one autostart entry off, so

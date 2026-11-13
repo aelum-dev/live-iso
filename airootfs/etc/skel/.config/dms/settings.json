@@ -3,6 +3,8 @@
   "currentThemeCategory": "dynamic",
   "matugenContrast": 0.5,
   "matugenSpec": "2025",
+  "matugenTemplateFoot": true,
+  "terminalPalette": "high",
   "hyprlandLayoutGapsOverride": 4,
   "hyprlandLayoutGapsOutOverride": 8,
   "hyprlandResizeOnBorder": true,

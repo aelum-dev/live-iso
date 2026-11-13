@@ -65,9 +65,11 @@ hyprpaper
 adwaita-cursors
 
 # A terminal beside the installer: the live Hyprland config binds Super+Return
-# to kitty and keeps its palette in step with the installer's light/dark
+# to foot and keeps its palette in step with the installer's light/dark
 # toggle (aelum-theme-watch.sh), and its config asks for JetBrains Mono.
-kitty
+# Nothing else comes with it: ncurses ships the `foot` terminfo, where the
+# kitty set pulled its own kitty-terminfo.
+foot
 ttf-jetbrains-mono
 nano
 

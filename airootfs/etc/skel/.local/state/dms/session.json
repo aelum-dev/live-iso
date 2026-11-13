@@ -21,7 +21,9 @@
     "qv4l2",
     "org.fcitx.fcitx5-migrator",
     "kbd-layout-viewer5",
-    "mpv"
+    "mpv",
+    "foot-server",
+    "footclient"
   ],
   "configVersion": 7
 }
