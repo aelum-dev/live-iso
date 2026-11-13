@@ -1,5 +1,16 @@
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "type": "file",
+        "source": "$HOME/.config/fastfetch/aelum.txt",
+        "color": {
+            "1": "#834c74",
+            "2": "#ce8eba"
+        },
+        "padding": {
+            "top": 2
+        }
+    },
     "modules": [
         {
             "type": "title",
