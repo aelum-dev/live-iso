@@ -9,16 +9,10 @@ hl.config({
 	decoration = {
 		rounding = 12,
 		blur = {
-			size = 9,
+			size = 7,
 			passes = 3,
 			enabled = true,
-			variant = "kawase",
-			brightness = 1.0,
-			contrast = 1.0,
-			noise = 0.012,
-			vibrancy = 0.28,
-			vibrancy_darkness = 0.15,
-			popups = true,
+			variant = "aurora",
 		},
 	},
 })
