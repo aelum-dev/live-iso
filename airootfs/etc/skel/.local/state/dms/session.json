@@ -23,7 +23,8 @@
     "kbd-layout-viewer5",
     "mpv",
     "foot-server",
-    "footclient"
+    "footclient",
+    "org.gnome.Papers-previewer"
   ],
   "configVersion": 7
 }

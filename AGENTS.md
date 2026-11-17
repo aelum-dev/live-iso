@@ -209,7 +209,9 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   Migration Wizard (there is no Fcitx 4 to import from) and the Keyboard layout viewer — the two extra
   entries the terminal package ships (`foot-server`, the daemon, and `footclient`, a window in a running
   daemon: Aelum starts plain `foot`, so only `foot` is a thing a person could launch), and `mpv`,
-  the engine the player is built on (measured: no mpv entry in a real menu). Autostart is **not** this
+  the engine the player is built on (measured: no mpv entry in a real menu), and
+  `org.gnome.Papers-previewer`, the previewer component Papers ships (a window inside someone
+  else's preview — like `footclient`, not a thing to launch). Autostart is **not** this
   mechanism and has no list: `~/.config/autostart/org.fcitx.Fcitx5.desktop` mirrors the packaged
   entry and adds `Hidden=true`, the spec's way of turning one autostart entry off, so
   `aelum-fcitx5.service` stays its only owner. Do not move that one into `hiddenApps` — the list
@@ -226,7 +228,8 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   `verify-installed.sh` holds the installed copy against the location the install ran with.
 - **The player owns media.** `~/.config/mimeapps.list` defaults every type the player's own desktop
   entry declares to `aelum.videoplayer.Player.desktop` — keep the two lists in sync when the player's
-  `MimeType` set changes. The player's entry carries `Keywords=…;mpv;`, so an `mpv` search in the
+  `MimeType` set changes. Images default to **Loupe** (`org.gnome.Loupe.desktop`, took over imv's
+  lines; imv no longer ships) and `application/pdf` to **Papers** (`org.gnome.Papers.desktop`). The player's entry carries `Keywords=…;mpv;`, so an `mpv` search in the
   launcher answers with the player (measured). The mpv package's entry is left exactly as shipped:
   its own `MimeType` set means it still appears in "Open with" lists, where the defaults above make
   the player the handler. The player's `float` + `opaque` + `keep_aspect_ratio` window rule
