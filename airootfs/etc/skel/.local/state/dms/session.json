@@ -24,7 +24,9 @@
     "mpv",
     "foot-server",
     "footclient",
-    "org.gnome.Papers-previewer"
+    "org.gnome.Papers-previewer",
+    "stoken-gui",
+    "stoken-gui-small"
   ],
   "configVersion": 7
 }

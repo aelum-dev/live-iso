@@ -211,7 +211,12 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   daemon: Aelum starts plain `foot`, so only `foot` is a thing a person could launch), and `mpv`,
   the engine the player is built on (measured: no mpv entry in a real menu), and
   `org.gnome.Papers-previewer`, the previewer component Papers ships (a window inside someone
-  else's preview — like `footclient`, not a thing to launch). Autostart is **not** this
+  else's preview — like `footclient`, not a thing to launch), and the two `stoken` windows that
+  ride in with the VPN stack (`stoken-gui`, `stoken-gui-small`: `openconnect` — the tunnel binary
+  the shell execs — hard-depends on `stoken` for RSA SecurID seeds, but the shell never opens the
+  seedlet, it asks for the token code in its own auth prompt; the hide is reversible — the launcher's
+  Hidden-apps card restores any entry with a click, which is the path the website FAQ gives to a
+  person handed a seed file). Autostart is **not** this
   mechanism and has no list: `~/.config/autostart/org.fcitx.Fcitx5.desktop` mirrors the packaged
   entry and adds `Hidden=true`, the spec's way of turning one autostart entry off, so
   `aelum-fcitx5.service` stays its only owner. Do not move that one into `hiddenApps` — the list
