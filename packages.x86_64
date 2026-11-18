@@ -95,6 +95,12 @@ wireless-regdb
 # inside the guest over SSH. openssh used to arrive as a dependency of gcr-4,
 # which is precisely the accident an explicit list exists to prevent: the
 # enabled unit and the config file stayed, the package did not.
+# The unit is gated on the host's 9p share by
+# /etc/systemd/system/sshd.service.d/aelum-live-ssh.conf, so a live image booted
+# anywhere else has no SSH server listening at all: an empty-password root login
+# is a harness channel, never something a person carries onto a network. That
+# means the harness must always export the share (docker/scripts/test-install.sh
+# mounts it unconditionally for that reason).
 openssh
 
 # The fonts the installer's own UI renders: all 28 of its languages. Its icons

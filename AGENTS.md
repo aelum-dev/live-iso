@@ -263,6 +263,21 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   (`home/aelum/.config/hypr/hyprland.lua` and `dms/outputs.lua`), not from `/etc/skel`, so installed
   homes never start it. The installed system has no automatic monitor scaling yet — don't describe it
   as an installed feature.
+- **`sshd` is a harness channel, not a live-session service.** This profile enables `sshd.service`
+  and drops in `etc/ssh/sshd_config.d/10-archiso.conf` (root, empty password) because the whole
+  QEMU matrix in `docker/` drives the guest through it — but the same image is what a person boots
+  on a network nobody owns and leaves running through an install, so an ungated unit is an
+  unauthenticated root login on the machine's only interface. `etc/systemd/system/sshd.service.d/
+  aelum-live-ssh.conf` therefore gates the unit on `/shared` being a **mount point**: the 9p share
+  the harness exports (`-virtfs …,mount_tag=shared`) is the one thing a harness boot has and a real
+  boot never does, so with no share nothing listens on 22. Two consequences: the harness must always
+  export the share (`docker/scripts/test-install.sh` mounts it in every mode now, not only in boot
+  mode / `SHARED_INSTALLER=1`), and the drop-in's `After=shared-mount.service` is load-bearing —
+  conditions are weighed at activation, so without that ordering the condition races the mount and
+  the harness loses SSH on a fast boot. Do not "fix" a live session that has no SSH by removing the
+  gate: pass the share, or `systemctl edit --runtime sshd.service` on a machine you are holding.
+  Nothing here reaches an installed system — it is not an isocopy job, and the installer never
+  enables `sshd` there either.
 - `efiboot/` is left over from the old systemd-boot profile. Nothing uses it.
 
 ## License
