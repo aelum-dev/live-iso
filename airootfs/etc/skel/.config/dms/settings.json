@@ -32,6 +32,10 @@
   "textRenderType": 1,
   "osdPowerProfileEnabled": true,
   "displayNameMode": "model",
+  "updaterNotify": true,
+  "updaterCheckOnStart": true,
+  "updaterUseCustomCommand": true,
+  "updaterCustomCommand": "gio launch /usr/share/applications/aelum.packageinstaller.Packages.desktop",
   "barConfigs": [
     {
       "id": "default",

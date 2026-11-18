@@ -226,6 +226,28 @@ via `website/scripts/icons.py`), so a glyph added once is available to all three
   copy, and a home is seeded out of the skeleton, so the skeleton is where a value every
   account should start with belongs. Nothing else in the file is touched.
   `verify-installed.sh` holds the installed copy against the location the install ran with.
+- **The update widget's data, its nudge and its upgrade path are all seeded.**
+  `etc/skel/.config/dms/settings.json` puts Dux Shell's `systemUpdate` widget in the bar center, so
+  three things have to be true for it to be worth shipping, and the keys that decide them are top-level
+  scalars — the same shape Dux writes itself. It counts through `checkupdates`, which only
+  `pacman-contrib` ships and `dux-shell` neither depends on nor names as an optdep, so the desktop set
+  carries the package (`installer/installdesktop`); without it the widget falls back to `pacman -Qu`
+  against the image's own sync-DB snapshot and reports nothing, forever. `updaterNotify` (Dux's default:
+  off) turns on the `"<N> updates" / "Software updates are ready to install."` notification, throttled by
+  `updaterNotifyMinSeconds` (default: one day), and `updaterCheckOnStart` (default off) makes the count
+  true at login instead of whenever the daily `updaterIntervalSeconds` poll happens to land.
+  `updaterUseCustomCommand` + `updaterCustomCommand` hand the **Upgrade action** to
+  `aelum-package-installer`, so the desktop has one update flow and not two.
+- **A custom update command does not mean "no terminal" — and the command is chosen for that.**
+  `upgradeRunsInTerminal` is true *because* a custom command is set, Dux hides its own "Show upgrade in a
+  window" option in that mode, and the update modal (the list, then Upgrade) stays in front either way:
+  the command replaces only what the Upgrade button runs, and Dux splits it on whitespace with no
+  quoting (its own warning), so it is one token per argv word and the desktop path must keep no spaces.
+  The value is `gio launch /usr/share/applications/…desktop` because that returns in ~5 ms and the
+  launched app outlives it (measured), where `gtk-launch <app>` and the bare binary both hold the
+  terminal open for the app's whole life (measured: 4.1 s against a `sleep 4` stand-in). foot is that
+  terminal — `etc/skel/.config/environment.d/90-dms.conf` seeds `TERMINAL=foot`, the one requirement
+  Dux's own docs name for this widget — so the hand-off reads as a blink, not a window.
 - **The player owns media.** `~/.config/mimeapps.list` defaults every type the player's own desktop
   entry declares to `aelum.videoplayer.Player.desktop` — keep the two lists in sync when the player's
   `MimeType` set changes. Images default to **Loupe** (`org.gnome.Loupe.desktop`, took over imv's
